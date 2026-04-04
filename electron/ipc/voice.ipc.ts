@@ -184,77 +184,33 @@ export function registerVoiceIPC(ipcMain: IpcMain, win: BrowserWindow) {
     return true
   })
 
-  // Llamada a LLM para voz — similar a chat pero con configuración específica de voz
+  // Llamada a LLM para voz — ahora integrada con el motor de agentes y herramientas
   ipcMain.handle('voice:send-to-llm', async (_e, params: any) => {
     voiceAbortController = new AbortController()
 
-    const provider = params.provider || 'deepseek'
-    const apiKey = getSecret(provider)
+    const provider = params.provider || 'g4f'
+    const model = params.model || 'gpt-4o'
 
-    if (!apiKey && provider !== 'g4f-unlimited' && provider !== 'g4f') {
-      win.webContents.send('voice:llm-chunk', { type: 'error', error: `Sin clave API para ${provider}` })
-      return
-    }
-
-    const URLS_PROVEEDORES: Record<string, string> = {
-      openai: 'https://api.openai.com/v1',
-      openrouter: 'https://openrouter.ai/api/v1',
-      groq: 'https://api.groq.com/openai/v1',
-      deepseek: 'https://api.deepseek.com/v1',
-      'g4f-unlimited': 'http://localhost:8082/v1',
-      g4f: 'http://localhost:8082/v1',
-    }
-
-    const urlBase = URLS_PROVEEDORES[provider] || URLS_PROVEEDORES.openai
-    const encabezados: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (apiKey) encabezados['Authorization'] = `Bearer ${apiKey}`
-
-    const cuerpo: Record<string, any> = {
-      model: params.model || 'deepseek-chat',
-      messages: params.messages,
-      stream: true,
-      max_tokens: params.maxTokens || 300,
+    const emitChunk = (chunk: any) => {
+      win.webContents.send('voice:llm-chunk', chunk)
     }
 
     try {
-      const res = await fetch(`${urlBase}/chat/completions`, {
-        method: 'POST',
-        headers: encabezados,
-        body: JSON.stringify(cuerpo),
-        signal: voiceAbortController.signal,
-      })
-
-      if (!res.ok) {
-        const err = await res.text()
-        win.webContents.send('voice:llm-chunk', { type: 'error', error: `${provider} ${res.status}: ${err}` })
-        return
+      // Inyectar herramientas en la llamada de voz si no están presentes
+      if (!params.tools) {
+        const { fetchDynamicToolCatalog } = await import('./mcp.ipc')
+        params.tools = await fetchDynamicToolCatalog()
       }
 
-      const lector = res.body!.getReader()
-      const decodificador = new TextDecoder()
-      let buffer = ''
+      // Reutilizar la lógica de bucle de agentes de chat-runtime
+      const { runAgenticLoop } = await import('./chat-runtime')
 
-      while (true) {
-        const { done, value } = await lector.read()
-        if (done) break
-        buffer += decodificador.decode(value, { stream: true })
-        const lineas = buffer.split('\n')
-        buffer = lineas.pop() ?? ''
-
-        for (const linea of lineas) {
-          if (!linea.startsWith('data: ')) continue
-          const datos = linea.slice(6).trim()
-          if (datos === '[DONE]') {
-            win.webContents.send('voice:llm-chunk', { type: 'done' })
-            return
-          }
-          try {
-            const evt = JSON.parse(datos)
-            const texto = evt.choices?.[0]?.delta?.content
-            if (texto) win.webContents.send('voice:llm-chunk', { type: 'text', text: texto })
-          } catch {}
-        }
+      // Mapeo de URL base para G4F
+      if (provider === 'g4f') {
+        params.baseUrl = 'http://localhost:8080/v1'
       }
+
+      await runAgenticLoop(provider, params, emitChunk, voiceAbortController.signal)
       win.webContents.send('voice:llm-chunk', { type: 'done' })
     } catch (e: any) {
       if (e.name === 'AbortError') return

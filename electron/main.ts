@@ -22,7 +22,6 @@ import {
   getDynamicToolCatalogStatus,
 } from './ipc/mcp.ipc'
 import { registerKnowledgeIPC } from './ipc/knowledge.ipc'
-import { registerOpenClawAuthIPC } from './ipc/openclaw-auth.ipc'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -444,7 +443,6 @@ function createWindow() {
   registerMemoryIPC(ipcMain)
   registerMcpIPC(ipcMain)
   registerKnowledgeIPC(ipcMain)
-  registerOpenClawAuthIPC(ipcMain, mainWindow)
 
   mainWindow.on('closed', () => {
     mainWindow = null

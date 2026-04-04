@@ -460,6 +460,9 @@ async function generateImageWithG4F(args: Record<string, any>) {
   const attempts = buildProviderAttempts(args.provider)
   const notes: string[] = []
 
+  // Priorizar G4F Proxy v2 en :8080 si G4F_URL apunta ahí, o usar :8080 directamente
+  const IMAGE_API = `http://127.0.0.1:8080/v1/images/generations`
+
   for (const provider of attempts) {
     try {
       const payload: Record<string, any> = {
@@ -472,7 +475,7 @@ async function generateImageWithG4F(args: Record<string, any>) {
         payload.provider = provider
       }
 
-      const response = await fetchJson(`${G4F_URL}/v1/images/generations`, {
+      const response = await fetchJson(IMAGE_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -542,6 +545,9 @@ async function generateVideoWithG4F(args: Record<string, any>) {
   const attempts = buildProviderAttempts(args.provider)
   const notes: string[] = []
 
+  // Usar G4F Proxy v2 en :8080
+  const VIDEO_API = `http://127.0.0.1:8080/v1/media/generate`
+
   for (const provider of attempts) {
     try {
       const payload: Record<string, any> = {
@@ -554,7 +560,7 @@ async function generateVideoWithG4F(args: Record<string, any>) {
         payload.provider = provider
       }
 
-      const response = await fetchJson(`${G4F_URL}/v1/media/generate`, {
+      const response = await fetchJson(VIDEO_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -902,9 +908,7 @@ export const OPENCLAW_TOOLS_KNOWN = [...LOCAL_RUNTIME_TOOLS]
 
 export function registerMcpIPC(ipcMain: IpcMain) {
   ipcMain.handle('mcp:get-servers', async () => {
-    const [bridge, subagents, g4f] = await Promise.allSettled([
-      checkPort(PWA_BRIDGE_URL),
-      checkPort(SUBAGENTS_URL),
+    const [g4f] = await Promise.allSettled([
       checkPort(G4F_URL, '/v1/models'),
     ])
 
@@ -914,8 +918,6 @@ export function registerMcpIPC(ipcMain: IpcMain) {
 
     return {
       servers: [
-        { id: 'pwa-bridge', name: 'PWA Bridge', url: PWA_BRIDGE_URL, status: toStatus(bridge), type: 'bridge' },
-        { id: 'subagents', name: 'Subagents Runtime', url: SUBAGENTS_URL, status: toStatus(subagents), type: 'agents' },
         { id: 'g4f', name: 'G4F (modelos libres)', url: G4F_URL, status: toStatus(g4f), type: 'llm' },
       ],
     }

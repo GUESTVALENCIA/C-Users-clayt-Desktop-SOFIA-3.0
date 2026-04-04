@@ -76,6 +76,7 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
     setState('connecting')
     setError('')
     try {
+      void playClick() // Click al conectar
       mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
         audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
       })
@@ -99,7 +100,7 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
               sessionId: sessionIdRef.current,
               source: 'sofia3',
               metadata: {
-                authorityRoute: { provider: 'g4f-unlimited', model: 'gpt-4o-audio' },
+                authorityRoute: { provider: 'g4f', model: 'gpt-4o' },
                 voiceLane: { provider: 'deepgram', model: 'nova-2' },
                 ttsLane: { provider: 'deepgram', model: 'aura-2-carina-es' },
               },
@@ -261,6 +262,22 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
     }
   }
 
+  async function playClick() {
+    const ctx = new AudioContext()
+    const now = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(1200, now)
+    gain.gain.setValueAtTime(0.1, now)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(now + 0.1)
+    setTimeout(() => void ctx.close(), 200)
+  }
+
   async function startRingtone() {
     stopRingtone()
     const ctx = new AudioContext()
@@ -269,29 +286,37 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
     const pulse = async () => {
       if (!ringtoneCtxRef.current) return
       const now = ctx.currentTime
+
+      // Ringtone: 2 segundos de tono, 4 segundos de silencio (estilo europeo/telefónico)
+      // Pero el usuario pidió "3 ringtones largos"
       const oscillatorA = ctx.createOscillator()
       const oscillatorB = ctx.createOscillator()
       const gain = ctx.createGain()
+
       oscillatorA.type = 'sine'
-      oscillatorB.type = 'triangle'
-      oscillatorA.frequency.setValueAtTime(880, now)
-      oscillatorB.frequency.setValueAtTime(660, now)
-      gain.gain.setValueAtTime(0.0001, now)
-      gain.gain.exponentialRampToValueAtTime(0.045, now + 0.04)
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52)
+      oscillatorB.type = 'sine'
+      oscillatorA.frequency.setValueAtTime(425, now)
+      oscillatorB.frequency.setValueAtTime(450, now)
+
+      gain.gain.setValueAtTime(0, now)
+      gain.gain.linearRampToValueAtTime(0.1, now + 0.1)
+      gain.gain.linearRampToValueAtTime(0.1, now + 1.9)
+      gain.gain.linearRampToValueAtTime(0, now + 2.0)
+
       oscillatorA.connect(gain)
       oscillatorB.connect(gain)
       gain.connect(ctx.destination)
+
       oscillatorA.start(now)
       oscillatorB.start(now)
-      oscillatorA.stop(now + 0.55)
-      oscillatorB.stop(now + 0.55)
+      oscillatorA.stop(now + 2.1)
+      oscillatorB.stop(now + 2.1)
     }
 
     await pulse()
     ringtoneTimerRef.current = window.setInterval(() => {
       void pulse()
-    }, 1500)
+    }, 4000)
   }
 
   function stopRingtone() {
@@ -420,6 +445,7 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
           <>
             <button
               onClick={() => {
+                void playClick()
                 setState('connecting')
                 void startCall()
               }}

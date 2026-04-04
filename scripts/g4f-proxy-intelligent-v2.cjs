@@ -65,6 +65,7 @@ const PREFIX_MAP = {
   'imagen-': ['PollinationsAI', 'OperaAria', 'Yqcloud'],
   'qwen-image': ['PollinationsAI', 'OperaAria', 'Yqcloud'],
   'video': ['PollinationsAI', 'OperaAria', 'Yqcloud'],
+  'veo-': ['PollinationsAI', 'OperaAria', 'Yqcloud'],
   
   // Por defecto (cualquier otro modelo)
   '*': ['OperaAria', 'Yqcloud']
