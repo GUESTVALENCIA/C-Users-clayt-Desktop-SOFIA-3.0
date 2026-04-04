@@ -1,6 +1,6 @@
 # SOFIA 3.0
 
-Electron + React control app para orquestacion visible de Sofia sobre OpenClaw, MCP y biblioteca RAC de APIs publicas.
+Electron + React control app para orquestacion visible de Sofia sobre OpenClaw, MCP y biblioteca RAG de APIs publicas.
 
 ## Estado dinamico
 - Ultima actualizacion: 2026-04-03T06:23:34.374Z
@@ -12,7 +12,7 @@ Electron + React control app para orquestacion visible de Sofia sobre OpenClaw, 
 - Lanes de memoria Sofia/OpenClaw: 3
 
 ## Prioridad de consulta
-1. Biblioteca RAC local de APIs publicas
+1. Biblioteca RAG local de APIs publicas
 2. Servidores MCP locales y clonados
 3. Biblioteca canonica local de OpenClaw
 4. Context7
