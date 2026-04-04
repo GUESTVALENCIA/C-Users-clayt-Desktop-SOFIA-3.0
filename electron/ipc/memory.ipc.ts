@@ -200,7 +200,4 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
     } catch { return '' }
   })
 
-  ipcMain.handle('memory:get-worker-status', async () => {
-    return { status: 'active', activeTasks: 1, completedToday: 5 }
-  })
 }

@@ -22,6 +22,7 @@ import {
   getDynamicToolCatalogStatus,
 } from './ipc/mcp.ipc'
 import { registerKnowledgeIPC } from './ipc/knowledge.ipc'
+import { registerWorkerIPC } from './ipc/worker.ipc'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -443,6 +444,7 @@ function createWindow() {
   registerMemoryIPC(ipcMain)
   registerMcpIPC(ipcMain)
   registerKnowledgeIPC(ipcMain)
+  if (mainWindow) registerWorkerIPC(ipcMain, mainWindow)
 
   mainWindow.on('closed', () => {
     mainWindow = null

@@ -756,6 +756,15 @@ const LOCAL_RUNTIME_TOOLS: ToolDescriptor[] = [
       required: ['text'],
     },
   },
+  {
+    name: 'avatar_call',
+    description: 'Inicia el pipeline completo de avatar: genera imagen estatica y luego video con transicion fluida.',
+    inputSchema: {
+      type: 'object',
+      properties: { prompt: { type: 'string', description: 'Descripcion del entorno y apariencia del avatar' } },
+      required: ['prompt'],
+    },
+  },
 ]
 
 function attachSource(tools: ToolDescriptor[], source: string) {
@@ -884,6 +893,28 @@ async function getRuntimeHealthSnapshot() {
 }
 
 export async function callRealTool(toolName: string, args: Record<string, any>) {
+  if (toolName === 'avatar_call') {
+    // Pipeline automático: Imagen -> Video
+    const imageResult = await generateImageWithG4F({
+      prompt: args.prompt || 'Professional woman in a minimalist office, hyperrealistic',
+      model: 'flux'
+    })
+
+    if (!imageResult.success) return imageResult
+
+    const videoResult = await generateVideoWithG4F({
+      prompt: `Zoom into the image, natural movement, ${args.prompt}`,
+      model: 'veo-3.1-fast'
+    })
+
+    return {
+      success: videoResult.success,
+      image: imageResult.savedPath,
+      video: videoResult.savedPath,
+      kind: 'avatar_scene'
+    }
+  }
+
   if (toolName === 'generate_image') {
     return generateImageWithG4F(args)
   }
