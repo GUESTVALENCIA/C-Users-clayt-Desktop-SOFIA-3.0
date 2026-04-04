@@ -1,0 +1,231 @@
+// G4F Proxy Inteligente — Mapea 250+ modelos a proveedores ilimitados
+// Catálogo SOFÍA 3.0 → Yqcloud (GPT-5-mini) + PollinationsAI + Perplexity
+// OpenClaw → :8080 → (mapeo) → G4F Docker :8082
+const http = require('http');
+
+const G4F_HOST = '127.0.0.1';
+const G4F_PORT = 8082;
+const PROXY_PORT = 8080;
+
+// Mapeo de categorías de modelo a proveedor real
+const MODEL_TO_PROVIDER = {
+  // Texto: GPT, Claude, DeepSeek, Gemini, Llama, Qwen, Grok, etc.
+  'gpt-': 'Yqcloud',
+  'claude-': 'Yqcloud',
+  'deepseek-': 'Yqcloud',
+  'gemini-': 'Yqcloud',
+  'llama-': 'Yqcloud',
+  'qwen-': 'Yqcloud',
+  'grok-': 'Yqcloud',
+  'glm-': 'Yqcloud',
+  'phi-': 'Yqcloud',
+  'kimi-': 'Yqcloud',
+  'o1': 'Yqcloud',
+  'o3': 'Yqcloud',
+  'ernie-': 'Yqcloud',
+  'minimax-': 'Yqcloud',
+  'command-': 'Yqcloud',
+  'moonshotai/': 'Yqcloud',
+  
+  // openai-fast específico
+  'openai-fast': 'PollinationsAI',
+  
+  // Modelos de imagen/video (PollinationsAI soporta algunos)
+  'flux': 'PollinationsAI',
+  'gpt-image': 'PollinationsAI',
+  'gemini-': 'PollinationsAI', // imagen
+  'imagen-': 'PollinationsAI',
+  'nanobanana': 'PollinationsAI',
+  'qwen-image': 'PollinationsAI',
+  'hunyuan': 'PollinationsAI',
+  'seed': 'PollinationsAI',
+  'seedream': 'PollinationsAI',
+  'dall-e-3': 'PollinationsAI',
+  'midijourney': 'PollinationsAI',
+  'recraft': 'PollinationsAI',
+  'reve-': 'PollinationsAI',
+  'twinflow-': 'PollinationsAI',
+  'vidu-': 'PollinationsAI',
+  'z-image': 'PollinationsAI',
+  'hazel-': 'PollinationsAI',
+  'hidream-': 'PollinationsAI',
+  'ideogram-': 'PollinationsAI',
+  'janus-pro-7b-image': 'PollinationsAI',
+  'mai-image-1': 'PollinationsAI',
+  'wan-': 'PollinationsAI',
+  'cogvideox-': 'PollinationsAI',
+  'frame-flow': 'PollinationsAI',
+  'hunyuanvideo': 'PollinationsAI',
+  'longcat-video': 'PollinationsAI',
+  'mochi-': 'PollinationsAI',
+  
+  // Search/Perplexity
+  'sonar-': 'Perplexity',
+  'perplexity': 'Perplexity',
+  'pplx_': 'Perplexity',
+  
+  // Audio
+  'gpt-4o-audio': 'PollinationsAI',
+  'whisperfall': 'PollinationsAI',
+  'openai-audio': 'PollinationsAI',
+};
+
+// Modelos que requieren API key (OpenRouter, GitHub Copilot, etc.)
+const API_KEY_PROVIDERS = {
+  'OpenRouter': { provider: 'OpenRouter', apiKey: null }, // se inyecta si existe
+  'GithubCopilotAPI': { provider: 'GithubCopilotAPI', apiKey: null },
+  'DeepInfra': { provider: 'DeepInfra', apiKey: null },
+  'Groq': { provider: 'Groq', apiKey: null },
+  'CohereForAI': { provider: 'CohereForAI', apiKey: null },
+};
+
+function getProviderForModel(modelId) {
+  if (!modelId) return { provider: 'Yqcloud', model: 'gpt-3.5-turbo' };
+  
+  const lowerModel = modelId.toLowerCase();
+  
+  // Buscar coincidencia por prefijo
+  for (const [prefix, provider] of Object.entries(MODEL_TO_PROVIDER)) {
+    if (lowerModel.startsWith(prefix.toLowerCase())) {
+      return { provider, model: modelId };
+    }
+  }
+  
+  // Si no coincide, usar Yqcloud para texto, PollinationsAI para otros
+  if (lowerModel.includes('image') || lowerModel.includes('video') || lowerModel.includes('flux') || lowerModel.includes('dall')) {
+    return { provider: 'PollinationsAI', model: modelId };
+  }
+  
+  // Por defecto Yqcloud
+  return { provider: 'Yqcloud', model: 'gpt-3.5-turbo' };
+}
+
+function sanitize(messages) {
+  if (!Array.isArray(messages)) return messages;
+  return messages
+    .filter(m => m.role !== 'tool')           // G4F no entiende tool results
+    .map(m => {
+      let content = m.content;
+      if (content === null || content === undefined) content = '';
+      else if (Array.isArray(content)) content = content.filter(p => p.type === 'text').map(p => p.text).join('\n');
+      return { role: m.role, content: String(content) };
+    })
+    .filter(m => m.role !== 'assistant' || m.content.trim() !== ''); // quitar asistente vacío
+}
+
+const server = http.createServer((req, res) => {
+  const chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    let body = Buffer.concat(chunks).toString();
+    console.log(`[proxy] ${req.method} ${req.url} (${body.length} chars)`);
+
+    let wasStreaming = false;
+    if (req.url?.includes('/chat/completions') && body) {
+      try {
+        const p = JSON.parse(body);
+        const modelId = p.model || 'gpt-3.5-turbo';
+        
+        // Determinar proveedor basado en modelo
+        const { provider, model } = getProviderForModel(modelId);
+        p.provider = provider;
+        p.model = model;
+        
+        // Sanitizar mensajes
+        p.messages = sanitize(p.messages);
+        
+        // Eliminar herramientas (G4F no las soporta)
+        delete p.tools;
+        delete p.tool_choice;
+        
+        // Deshabilitar streaming temporalmente (conversión a SSE después)
+        if (p.stream) { wasStreaming = true; p.stream = false; }
+        
+        body = JSON.stringify(p);
+        console.log(`[proxy] → ${provider} / ${model}`);
+      } catch (e) {
+        console.log(`[proxy] JSON error: ${e.message}`);
+      }
+    }
+
+    const headers = { 
+      ...req.headers, 
+      host: `${G4F_HOST}:${G4F_PORT}`, 
+      'content-length': Buffer.byteLength(body) 
+    };
+
+    const fwd = http.request({ 
+      hostname: G4F_HOST, 
+      port: G4F_PORT, 
+      path: req.url, 
+      method: req.method, 
+      headers 
+    }, upstream => {
+      if (wasStreaming) {
+        // Convertir respuesta no-streaming a formato SSE delta (OpenAI-compatible)
+        const chunks2 = [];
+        upstream.on('data', c => chunks2.push(c));
+        upstream.on('end', () => {
+          try {
+            const json = JSON.parse(Buffer.concat(chunks2).toString());
+            res.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Access-Control-Allow-Origin': '*'
+            });
+            // Convertir "message" a formato "delta" para streaming
+            const content = json.choices?.[0]?.message?.content || '';
+            const deltaChunk = {
+              id: json.id || 'chatcmpl-proxy',
+              object: 'chat.completion.chunk',
+              created: json.created || Math.floor(Date.now() / 1000),
+              model: json.model || 'unknown',
+              choices: [{
+                index: 0,
+                delta: { role: 'assistant', content: content },
+                finish_reason: null
+              }]
+            };
+            res.write('data: ' + JSON.stringify(deltaChunk) + '\n\n');
+            // Enviar chunk final con finish_reason
+            const doneChunk = {
+              id: json.id || 'chatcmpl-proxy',
+              object: 'chat.completion.chunk',
+              created: json.created || Math.floor(Date.now() / 1000),
+              model: json.model || 'unknown',
+              choices: [{
+                index: 0,
+                delta: {},
+                finish_reason: 'stop'
+              }],
+              usage: json.usage || null
+            };
+            res.write('data: ' + JSON.stringify(doneChunk) + '\n\n');
+            res.write('data: [DONE]\n\n');
+          } catch (e) {
+            res.writeHead(502);
+            res.end(JSON.stringify({ error: { message: 'proxy parse error: ' + e.message } }));
+          }
+          res.end();
+        });
+      } else {
+        res.writeHead(upstream.statusCode, upstream.headers);
+        upstream.pipe(res);
+      }
+    });
+    
+    fwd.on('error', e => { 
+      console.log(`[proxy] Forward error: ${e.message}`);
+      res.writeHead(502); 
+      res.end(JSON.stringify({ error: { message: 'Gateway error: ' + e.message } })); 
+    });
+    
+    fwd.write(body);
+    fwd.end();
+  });
+});
+
+server.listen(PROXY_PORT, '0.0.0.0', () => {
+  console.log(`[g4f-proxy-intelligent] :${PROXY_PORT} → :${G4F_PORT}`);
+  console.log(`[g4f-proxy-intelligent] Mapeo: Yqcloud (texto), PollinationsAI (imagen/video), Perplexity (search)`);
+});

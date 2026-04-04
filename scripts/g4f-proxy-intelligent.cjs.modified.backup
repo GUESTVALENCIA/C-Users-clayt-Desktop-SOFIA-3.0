@@ -1,0 +1,459 @@
+// G4F Proxy Inteligente — Mapea 250+ modelos a proveedores ilimitados
+// Catálogo SOFÍA 3.0 → Yqcloud (GPT-5-mini) + PollinationsAI + Perplexity
+// OpenClaw → :8080 → (mapeo) → G4F Docker :8082
+const http = require('http');
+
+const G4F_HOST = '127.0.0.1';
+const G4F_PORT = 8082;
+const PROXY_PORT = 8080;
+
+// Mapeo de categorías de modelo a proveedor real
+const MODEL_TO_PROVIDER = {
+  // Texto: GPT, Claude, DeepSeek, Gemini, Llama, Qwen, Grok, etc.
+  'gpt-': 'Yqcloud',
+  'claude-': 'Yqcloud',
+  'deepseek-': 'Yqcloud',
+  'gemini-': 'Yqcloud',
+  'llama-': 'Yqcloud',
+  'qwen-': 'Yqcloud',
+  'grok-': 'Yqcloud',
+  'glm-': 'Yqcloud',
+  'phi-': 'Yqcloud',
+  'kimi-': 'Yqcloud',
+  'o1': 'Yqcloud',
+  'o3': 'Yqcloud',
+  'ernie-': 'Yqcloud',
+  'minimax-': 'Yqcloud',
+  'command-': 'Yqcloud',
+  'moonshotai/': 'Yqcloud',
+  
+  // openai-fast específico
+  'openai-fast': 'PollinationsAI',
+  
+  // Modelos de imagen/video (PollinationsAI soporta algunos)
+  'flux': 'PollinationsAI',
+  'gpt-image': 'PollinationsAI',
+  'gemini-': 'PollinationsAI', // imagen
+  'imagen-': 'PollinationsAI',
+  'nanobanana': 'PollinationsAI',
+  'qwen-image': 'PollinationsAI',
+  'hunyuan': 'PollinationsAI',
+  'seed': 'PollinationsAI',
+  'seedream': 'PollinationsAI',
+  'dall-e-3': 'PollinationsAI',
+  'midijourney': 'PollinationsAI',
+  'recraft': 'PollinationsAI',
+  'reve-': 'PollinationsAI',
+  'twinflow-': 'PollinationsAI',
+  'vidu-': 'PollinationsAI',
+  'z-image': 'PollinationsAI',
+  'hazel-': 'PollinationsAI',
+  'hidream-': 'PollinationsAI',
+  'ideogram-': 'PollinationsAI',
+  'janus-pro-7b-image': 'PollinationsAI',
+  'mai-image-1': 'PollinationsAI',
+  'wan-': 'PollinationsAI',
+  'cogvideox-': 'PollinationsAI',
+  'frame-flow': 'PollinationsAI',
+  'hunyuanvideo': 'PollinationsAI',
+  'longcat-video': 'PollinationsAI',
+  'mochi-': 'PollinationsAI',
+  
+  // Search/Perplexity
+  'sonar-': 'Perplexity',
+  'perplexity': 'Perplexity',
+  'pplx_': 'Perplexity',
+  
+  // Audio
+  'gpt-4o-audio': 'PollinationsAI',
+  'whisperfall': 'PollinationsAI',
+  'openai-audio': 'PollinationsAI',
+};
+
+// Modelos que requieren API key (OpenRouter, GitHub Copilot, etc.)
+const API_KEY_PROVIDERS = {
+  'OpenRouter': { provider: 'OpenRouter', apiKey: null }, // se inyecta si existe
+  'GithubCopilotAPI': { provider: 'GithubCopilotAPI', apiKey: null },
+  'DeepInfra': { provider: 'DeepInfra', apiKey: null },
+  'Groq': { provider: 'Groq', apiKey: null },
+  'CohereForAI': { provider: 'CohereForAI', apiKey: null },
+};
+
+function getProviderForModel(modelId) {
+  if (!modelId) return { provider: 'Yqcloud', model: 'gpt-3.5-turbo' };
+  
+  const lowerModel = modelId.toLowerCase();
+  
+  // Buscar coincidencia por prefijo
+  for (const [prefix, provider] of Object.entries(MODEL_TO_PROVIDER)) {
+    if (lowerModel.startsWith(prefix.toLowerCase())) {
+      return { provider, model: modelId };
+    }
+  }
+  
+  // Si no coincide, usar Yqcloud para texto, PollinationsAI para otros
+  if (lowerModel.includes('image') || lowerModel.includes('video') || lowerModel.includes('flux') || lowerModel.includes('dall')) {
+    return { provider: 'PollinationsAI', model: modelId };
+  }
+  
+  // Por defecto Yqcloud
+  return { provider: 'Yqcloud', model: 'gpt-3.5-turbo' };
+}
+
+function sanitize(messages) {
+  if (!Array.isArray(messages)) return messages;
+  return messages
+    .map(m => {
+      // Mantener tool results como mensajes de usuario para que G4F los entienda
+      if (m.role === 'tool') {
+        return { role: 'user', content: `[Tool Result: ${m.name || 'unknown'}]\n${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}` };
+      }
+      // Mantener assistant con tool_calls — convertir a texto descriptivo
+      if (m.role === 'assistant' && m.tool_calls) {
+        const callsText = m.tool_calls.map(tc => {
+          const fn = tc.function || tc;
+          return `[Called tool: ${fn.name}(${fn.arguments || '{}'})]`;
+        }).join('\n');
+        const content = m.content ? m.content + '\n' + callsText : callsText;
+        return { role: 'assistant', content };
+      }
+      let content = m.content;
+      if (content === null || content === undefined) content = '';
+      else if (Array.isArray(content)) content = content.filter(p => p.type === 'text').map(p => p.text).join('\n');
+      return { role: m.role, content: String(content) };
+    })
+    .filter(m => m.role !== 'assistant' || m.content.trim() !== ''); // quitar asistente vacío
+}
+
+// Limitar contexto total — PollinationsAI/Yqcloud no toleran requests enormes (OpenClaw manda 90K+)
+const MAX_CONTEXT_CHARS = 14000;  // Budget total de caracteres
+const MAX_SYSTEM_CHARS = 5000;    // System prompt max (preserva tool prompt al inicio)
+const MAX_MSG_CHARS = 2500;       // Cada mensaje individual max
+
+function trimContext(messages) {
+  if (!Array.isArray(messages) || messages.length === 0) return messages;
+
+  // 1. Truncar system prompt si es enorme (preservar inicio = tool prompt)
+  let system = null;
+  let rest = messages;
+  if (messages[0].role === 'system') {
+    system = { ...messages[0] };
+    const sysContent = system.content || '';
+    if (sysContent.length > MAX_SYSTEM_CHARS) {
+      system.content = sysContent.slice(0, MAX_SYSTEM_CHARS) + '\n[...truncated]';
+      console.log(`[proxy] System truncated: ${sysContent.length} → ${MAX_SYSTEM_CHARS}`);
+    }
+    rest = messages.slice(1);
+  }
+
+  // 2. Truncar mensajes individuales largos
+  rest = rest.map(m => {
+    const content = m.content || '';
+    if (content.length > MAX_MSG_CHARS) {
+      return { ...m, content: content.slice(0, MAX_MSG_CHARS) + '\n[...truncated]' };
+    }
+    return m;
+  });
+
+  // 3. Mantener últimos mensajes que quepan en el budget
+  const systemLen = system ? system.content.length : 0;
+  const budget = MAX_CONTEXT_CHARS - systemLen;
+  const kept = [];
+  let used = 0;
+  for (let i = rest.length - 1; i >= 0; i--) {
+    const len = (rest[i].content || '').length;
+    if (used + len > budget && kept.length >= 2) break;
+    kept.unshift(rest[i]);
+    used += len;
+  }
+
+  const result = system ? [system, ...kept] : kept;
+  if (kept.length < rest.length) {
+    console.log(`[proxy] Context trimmed: kept ${kept.length}/${rest.length} msgs`);
+  }
+  return result;
+}
+
+// Parsear tool calls del contenido del modelo (formato JSON emulado)
+function parseToolCalls(content) {
+  if (!content || typeof content !== 'string') return null;
+  const trimmed = content.trim();
+
+  // Intentar extraer JSON de la respuesta
+  let obj = null;
+  try {
+    obj = JSON.parse(trimmed);
+  } catch {
+    // Buscar JSON embebido en la respuesta
+    const jsonMatch = trimmed.match(/\{[\s\S]*"tool_calls"[\s\S]*\}/);
+    if (jsonMatch) {
+      try { obj = JSON.parse(jsonMatch[0]); } catch {}
+    }
+    if (!obj) {
+      // Buscar array directo [{name:...}]
+      const arrMatch = trimmed.match(/\[[\s\S]*\{[\s\S]*"name"[\s\S]*\}[\s\S]*\]/);
+      if (arrMatch) {
+        try { obj = { tool_calls: JSON.parse(arrMatch[0]) }; } catch {}
+      }
+    }
+  }
+
+  if (!obj) return null;
+
+  let calls = null;
+  if (Array.isArray(obj.tool_calls)) calls = obj.tool_calls;
+  else if (obj.name || obj.tool) calls = [obj];
+  else if (Array.isArray(obj)) calls = obj;
+
+  if (!calls || calls.length === 0) return null;
+
+  const openaiCalls = [];
+  let idx = 0;
+  for (const c of calls) {
+    if (typeof c !== 'object' || !c) continue;
+    const name = c.name || c.tool;
+    if (!name) continue;
+    let args;
+    if (typeof c.arguments === 'string') args = c.arguments;
+    else {
+      try { args = JSON.stringify(c.arguments || {}); } catch { args = '{}'; }
+    }
+    openaiCalls.push({
+      id: `call_g4f_${++idx}_${Date.now()}`,
+      type: 'function',
+      function: { name, arguments: args }
+    });
+  }
+
+  return openaiCalls.length > 0 ? openaiCalls : null;
+}
+
+const server = http.createServer((req, res) => {
+  const chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    let body = Buffer.concat(chunks).toString();
+    console.log(`[proxy] ${req.method} ${req.url} (${body.length} chars)`);
+
+    let wasStreaming = false;
+    let wasToolEmulated = false;
+    let fallbackBody = null; // Body sin tools para retry via Yqcloud
+    if (req.url?.includes('/chat/completions') && body) {
+      try {
+        const p = JSON.parse(body);
+        const modelId = p.model || 'gpt-3.5-turbo';
+
+        // Determinar proveedor basado en modelo
+        let { provider, model } = getProviderForModel(modelId);
+
+        // Guardar tools antes de borrarlas (G4F no las entiende)
+        const savedTools = p.tools;
+        delete p.tools;
+        delete p.tool_choice;
+
+        p.provider = provider;
+        p.model = model;
+
+        // Sanitizar y recortar contexto PRIMERO (OpenClaw manda 90K+)
+        p.messages = sanitize(p.messages);
+        p.messages = trimContext(p.messages);
+
+        // TOOL CALLING: emulación via system prompt + PollinationsAI
+        // Se inyecta DESPUÉS del trim para que el tool prompt nunca se corte
+        if (savedTools && savedTools.length > 0) {
+          const toolDefs = savedTools.filter(t => t.type === 'function' && t.function);
+          if (toolDefs.length > 0 && provider === 'Yqcloud') {
+            provider = 'PollinationsAI';
+            model = 'openai-fast';
+            p.provider = provider;
+            p.model = model;
+
+            // Tool prompt COMPACTO: solo nombre(params): descripcion corta
+            const toolList = toolDefs.map(t => {
+              const fn = t.function;
+              const params = fn.parameters?.properties
+                ? Object.keys(fn.parameters.properties).join(', ')
+                : '';
+              return `- ${fn.name}(${params}): ${(fn.description || '').slice(0, 60)}`;
+            }).join('\n');
+
+            const toolPrompt = [
+              'IMPORTANT: You MUST use one of these tools to answer the user. Do NOT answer directly.',
+              'Available tools:',
+              toolList,
+              '',
+              'RESPOND ONLY WITH THIS EXACT JSON FORMAT, nothing else:',
+              '{"tool_calls": [{"name": "TOOL_NAME", "arguments": {"param": "value"}}]}',
+              'DO NOT add any text before or after the JSON. ONLY output the JSON object.'
+            ].join('\n');
+
+            const hasSystem = p.messages.length > 0 && p.messages[0].role === 'system';
+            if (hasSystem) {
+              p.messages[0].content = toolPrompt + '\n\n' + p.messages[0].content;
+            } else {
+              p.messages.unshift({ role: 'system', content: toolPrompt });
+            }
+
+            wasToolEmulated = true;
+            console.log(`[proxy] Tool emulation: ${toolDefs.length} tools via PollinationsAI/openai`);
+          }
+        }
+
+        // Guardar body sin tools para fallback a Yqcloud si PollinationsAI falla
+        if (wasToolEmulated) {
+          const fb = JSON.parse(JSON.stringify(p));
+          fb.provider = getProviderForModel(modelId).provider;
+          fb.model = modelId;
+          // Quitar tool prompt del system message
+          if (fb.messages[0]?.role === 'system') {
+            const idx = fb.messages[0].content.indexOf('\n\n');
+            if (idx > 0) fb.messages[0].content = fb.messages[0].content.slice(idx + 2);
+          }
+          fb.stream = false;
+          fallbackBody = JSON.stringify(fb);
+        }
+
+        // Deshabilitar streaming temporalmente (conversión a SSE después)
+        if (p.stream) { wasStreaming = true; p.stream = false; }
+        
+        body = JSON.stringify(p);
+        console.log(`[proxy] → ${provider} / ${model}`);
+      } catch (e) {
+        console.log(`[proxy] JSON error: ${e.message}`);
+      }
+    }
+
+    const headers = { 
+      ...req.headers, 
+      host: `${G4F_HOST}:${G4F_PORT}`, 
+      'content-length': Buffer.byteLength(body) 
+    };
+
+    const fwd = http.request({ 
+      hostname: G4F_HOST, 
+      port: G4F_PORT, 
+      path: req.url, 
+      method: req.method, 
+      headers 
+    }, upstream => {
+      if (wasStreaming) {
+        // Convertir respuesta no-streaming a formato SSE delta (OpenAI-compatible)
+        const chunks2 = [];
+        upstream.on('data', c => chunks2.push(c));
+        upstream.on('end', () => {
+          try {
+            const raw = Buffer.concat(chunks2).toString();
+            console.log(`[proxy] Upstream response (${raw.length} chars): ${raw.slice(0, 300)}`);
+            const json = JSON.parse(raw);
+            res.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Access-Control-Allow-Origin': '*'
+            });
+            const content = json.choices?.[0]?.message?.content || '';
+            const id = json.id || 'chatcmpl-proxy';
+            const created = json.created || Math.floor(Date.now() / 1000);
+            const model = json.model || 'unknown';
+
+            // Detectar tool calls en la respuesta del modelo
+            const toolCalls = parseToolCalls(content);
+
+            // FALLBACK: Si PollinationsAI devolvio vacio, reintentar via Yqcloud sin tools
+            if (!content.trim() && !toolCalls && wasToolEmulated && fallbackBody) {
+              console.log(`[proxy] PollinationsAI empty → fallback to Yqcloud`);
+              const fbReq = http.request({
+                hostname: G4F_HOST, port: G4F_PORT, path: req.url, method: 'POST',
+                headers: { 'Content-Type': 'application/json', host: `${G4F_HOST}:${G4F_PORT}`, 'content-length': Buffer.byteLength(fallbackBody) }
+              }, fbRes => {
+                const fbChunks = [];
+                fbRes.on('data', c => fbChunks.push(c));
+                fbRes.on('end', () => {
+                  try {
+                    const fbJson = JSON.parse(Buffer.concat(fbChunks).toString());
+                    const fbContent = fbJson.choices?.[0]?.message?.content || 'No pude generar una respuesta.';
+                    console.log(`[proxy] Yqcloud fallback response: ${fbContent.slice(0, 100)}`);
+                    const fbDelta = { id, object: 'chat.completion.chunk', created, model,
+                      choices: [{ index: 0, delta: { role: 'assistant', content: fbContent }, finish_reason: null }] };
+                    res.write('data: ' + JSON.stringify(fbDelta) + '\n\n');
+                    res.write('data: ' + JSON.stringify({ id, object: 'chat.completion.chunk', created, model,
+                      choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] }) + '\n\n');
+                    res.write('data: [DONE]\n\n');
+                    res.end();
+                  } catch (fbErr) {
+                    res.write('data: ' + JSON.stringify({ id, object: 'chat.completion.chunk', created, model,
+                      choices: [{ index: 0, delta: { role: 'assistant', content: 'Error en fallback.' }, finish_reason: null }] }) + '\n\n');
+                    res.write('data: [DONE]\n\n');
+                    res.end();
+                  }
+                });
+              });
+              fbReq.on('error', () => { res.write('data: [DONE]\n\n'); res.end(); });
+              fbReq.write(fallbackBody);
+              fbReq.end();
+              return; // No continuar con la respuesta vacia
+            }
+
+            if (toolCalls) {
+              // Respuesta con tool_calls en formato OpenAI
+              console.log(`[proxy] Tool calls detected: ${toolCalls.map(t => t.function.name).join(', ')}`);
+              const deltaChunk = {
+                id, object: 'chat.completion.chunk', created, model,
+                choices: [{
+                  index: 0,
+                  delta: { role: 'assistant', tool_calls: toolCalls },
+                  finish_reason: null
+                }]
+              };
+              res.write('data: ' + JSON.stringify(deltaChunk) + '\n\n');
+              const doneChunk = {
+                id, object: 'chat.completion.chunk', created, model,
+                choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }],
+                usage: json.usage || null
+              };
+              res.write('data: ' + JSON.stringify(doneChunk) + '\n\n');
+            } else {
+              // Respuesta normal de texto
+              const deltaChunk = {
+                id, object: 'chat.completion.chunk', created, model,
+                choices: [{
+                  index: 0,
+                  delta: { role: 'assistant', content: content },
+                  finish_reason: null
+                }]
+              };
+              res.write('data: ' + JSON.stringify(deltaChunk) + '\n\n');
+              const doneChunk = {
+                id, object: 'chat.completion.chunk', created, model,
+                choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+                usage: json.usage || null
+              };
+              res.write('data: ' + JSON.stringify(doneChunk) + '\n\n');
+            }
+            res.write('data: [DONE]\n\n');
+          } catch (e) {
+            res.writeHead(502);
+            res.end(JSON.stringify({ error: { message: 'proxy parse error: ' + e.message } }));
+          }
+          res.end();
+        });
+      } else {
+        res.writeHead(upstream.statusCode, upstream.headers);
+        upstream.pipe(res);
+      }
+    });
+    
+    fwd.on('error', e => { 
+      console.log(`[proxy] Forward error: ${e.message}`);
+      res.writeHead(502); 
+      res.end(JSON.stringify({ error: { message: 'Gateway error: ' + e.message } })); 
+    });
+    
+    fwd.write(body);
+    fwd.end();
+  });
+});
+
+server.listen(PROXY_PORT, '0.0.0.0', () => {
+  console.log(`[g4f-proxy-intelligent] :${PROXY_PORT} → :${G4F_PORT}`);
+  console.log(`[g4f-proxy-intelligent] Mapeo: Yqcloud (texto), PollinationsAI (imagen/video), Perplexity (search)`);
+});

@@ -1,0 +1,24 @@
+appId: com.guestsvalencia.sofia
+productName: "SOFÍA"
+directories:
+  output: release
+  buildResources: resources
+files:
+  - dist/**/*
+  - dist-electron/**/*
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  shortcutName: "SOFÍA"
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+asar: true

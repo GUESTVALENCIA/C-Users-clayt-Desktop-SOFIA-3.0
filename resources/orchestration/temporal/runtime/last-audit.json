@@ -1,0 +1,85 @@
+{
+  "healthy": true,
+  "generatedAt": "2026-04-03T06:23:35.504Z",
+  "totals": {
+    "capabilities": 84,
+    "concepts": 84,
+    "runbooks": 440,
+    "errors": 68
+  },
+  "requirements": [
+    {
+      "id": "overview",
+      "label": "Vision general y arquitectura",
+      "matched": true,
+      "count": 279
+    },
+    {
+      "id": "install",
+      "label": "Instalacion y onboarding",
+      "matched": true,
+      "count": 160
+    },
+    {
+      "id": "channels",
+      "label": "Canales y routing",
+      "matched": true,
+      "count": 193
+    },
+    {
+      "id": "agents",
+      "label": "Agentes y sesiones",
+      "matched": true,
+      "count": 165
+    },
+    {
+      "id": "memory",
+      "label": "Memoria, contexto y compaction",
+      "matched": true,
+      "count": 70
+    },
+    {
+      "id": "extensibility",
+      "label": "Skills, plugins y tools",
+      "matched": true,
+      "count": 172
+    },
+    {
+      "id": "providers",
+      "label": "Providers y modelos",
+      "matched": true,
+      "count": 175
+    },
+    {
+      "id": "nodes",
+      "label": "Nodes y dispositivos",
+      "matched": true,
+      "count": 106
+    },
+    {
+      "id": "security",
+      "label": "Seguridad y pairing",
+      "matched": true,
+      "count": 193
+    },
+    {
+      "id": "remote",
+      "label": "Acceso remoto",
+      "matched": true,
+      "count": 59
+    },
+    {
+      "id": "troubleshooting",
+      "label": "Troubleshooting",
+      "matched": true,
+      "count": 108
+    },
+    {
+      "id": "web-ui",
+      "label": "Web, dashboard y control UI",
+      "matched": true,
+      "count": 177
+    }
+  ],
+  "missingRequirements": []
+}

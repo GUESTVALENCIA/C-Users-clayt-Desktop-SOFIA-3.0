@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "syncedAt": "2026-04-03T06:23:35.337Z",
+  "schedules": [
+    {
+      "scheduleId": "sofia-openclaw-refresh-schedule",
+      "label": "Refresh OpenClaw",
+      "workflowType": "openclawKnowledgeRefreshWorkflow",
+      "intervalLabel": "cada 6 horas",
+      "paused": false,
+      "note": "Refresh durable del corpus oficial de OpenClaw",
+      "nextActionAt": "2026-04-03T12:00:00.000Z",
+      "recentActionAt": "2026-04-03T06:20:54.323Z"
+    },
+    {
+      "scheduleId": "sofia-openclaw-coverage-schedule",
+      "label": "Auditoria de cobertura",
+      "workflowType": "openclawCoverageAuditWorkflow",
+      "intervalLabel": "cada 12 horas",
+      "paused": false,
+      "note": "Auditoria durable de cobertura del core OpenClaw",
+      "nextActionAt": "2026-04-03T12:00:00.000Z",
+      "recentActionAt": "2026-04-03T06:23:35.169Z"
+    }
+  ]
+}

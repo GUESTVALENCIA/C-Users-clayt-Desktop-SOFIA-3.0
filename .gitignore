@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-electron/
+release/
+.env
+*.exe
+*.log
+.DS_Store
+Thumbs.db
+.claude/
+.mcp.json
+C-Users-clayt-Desktop-SOF-A-3.0/
+nul
+*.tsbuildinfo
+resources/orchestration/triggerdev/
+resources/orchestration/triggerdev-docker/
+resources/orchestration/temporal-docker-compose/

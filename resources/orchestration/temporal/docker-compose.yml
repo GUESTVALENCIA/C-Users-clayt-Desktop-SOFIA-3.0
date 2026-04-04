@@ -1,0 +1,68 @@
+services:
+  temporal-postgresql:
+    container_name: sofia-temporal-postgresql
+    image: postgres:${POSTGRESQL_VERSION}
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    ports:
+      - "5434:5432"
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+    networks:
+      - sofia-temporal-network
+
+  temporal:
+    container_name: sofia-temporal
+    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    depends_on:
+      - temporal-postgresql
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: temporal-postgresql
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CLI_ADDRESS: temporal:7233
+    ports:
+      - "7233:7233"
+    volumes:
+      - ..\\temporal-docker-compose\\dynamicconfig:/etc/temporal/config/dynamicconfig
+    networks:
+      - sofia-temporal-network
+
+  temporal-admin-tools:
+    container_name: sofia-temporal-admin-tools
+    image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CLI_ADDRESS: temporal:7233
+    stdin_open: true
+    tty: true
+    networks:
+      - sofia-temporal-network
+
+  temporal-ui:
+    container_name: sofia-temporal-ui
+    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+    ports:
+      - "8233:8080"
+    networks:
+      - sofia-temporal-network
+
+networks:
+  sofia-temporal-network:
+    driver: bridge
+    name: sofia-temporal-network
+
+volumes:
+  temporal-postgres-data:

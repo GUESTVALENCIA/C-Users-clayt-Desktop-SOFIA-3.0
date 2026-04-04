@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-03-27T23:24:03.631Z",
+  "lastCheckedAt": "2026-04-03T06:38:12.681Z",
+  "status": "healthy",
+  "executionMode": "temporal",
+  "schedulesSynced": true,
+  "workerRestartedAt": "2026-04-03T06:21:03.847Z",
+  "lastIssueKey": null,
+  "lastIncidentAt": "2026-04-03T06:20:02.522Z",
+  "checks": {
+    "temporalUiOk": true,
+    "temporalGrpcOk": true,
+    "workerRunning": true,
+    "coverageHealthy": true
+  }
+}

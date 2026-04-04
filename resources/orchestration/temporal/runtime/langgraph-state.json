@@ -1,0 +1,12 @@
+{
+  "available": true,
+  "lastRunAt": "2026-04-04T16:38:28.595Z",
+  "lastOperation": "knowledge",
+  "lastExecutionMode": "local-fallback",
+  "lastRoute": "langgraph-knowledge-fallback",
+  "lastThreadId": "openclaw-graph-knowledge-e933e191-7958-4400-9bd4-2e08adc0b650",
+  "confidence": 0,
+  "notes": [
+    "Runtime durable degradado; se activa fallback local controlado."
+  ]
+}

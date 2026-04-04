@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-04-03T06:23:24.873Z",
+  "finishedAt": "2026-04-03T06:23:35.451Z",
+  "ok": true,
+  "passed": 11,
+  "total": 11,
+  "checks": [
+    {
+      "id": "runtime-bootstrap",
+      "ok": true,
+      "detail": "gRPC=true worker=true supervisor=true"
+    },
+    {
+      "id": "runtime-health",
+      "ok": true,
+      "detail": "ui=true grpc=true worker=true supervisor=true"
+    },
+    {
+      "id": "knowledge-gateway-query",
+      "ok": true,
+      "detail": "Gateway Runbook | langgraph-knowledge-temporal | temporal"
+    },
+    {
+      "id": "knowledge-memory-query",
+      "ok": true,
+      "detail": "Context Window & Compaction | langgraph-knowledge-temporal | temporal"
+    },
+    {
+      "id": "incident-query",
+      "ok": true,
+      "detail": "Gateway Runbook | langgraph-incident-temporal | temporal"
+    },
+    {
+      "id": "coverage-audit",
+      "ok": true,
+      "detail": "healthy=true missing=none"
+    },
+    {
+      "id": "refresh-workflow",
+      "ok": true,
+      "detail": "ok=true durationMs=6441 capabilities=84 runbooks=440"
+    },
+    {
+      "id": "schedule-sync",
+      "ok": true,
+      "detail": "ok=true schedules=2"
+    },
+    {
+      "id": "schedule-trigger",
+      "ok": true,
+      "detail": "sofia-openclaw-coverage-schedule next=2026-04-03T12:00:00.000Z"
+    },
+    {
+      "id": "langgraph-state",
+      "ok": true,
+      "detail": "available=true route=langgraph-trigger-schedule-temporal"
+    },
+    {
+      "id": "runtime-artifacts",
+      "ok": true,
+      "detail": "last-refresh, last-audit y langgraph-state persistidos"
+    }
+  ],
+  "runtime": {
+    "executionMode": "temporal",
+    "temporalUiOk": true,
+    "temporalGrpcOk": true,
+    "workerRunning": true,
+    "supervisorRunning": true,
+    "coverageHealthy": true,
+    "schedules": 2,
+    "langGraphRoute": "langgraph-trigger-schedule-temporal"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "projectType": "react",
+  "analyze": {
+    "performance": true,
+    "security": true,
+    "accessibility": true,
+    "bundleSize": true,
+    "codeQuality": true
+  },
+  "ignore": {
+    "rules": [
+      "noFetchInEffect",
+      "noUnusedDeps"
+    ],
+    "files": [
+      "src/types/**",
+      "dist/**",
+      "dist-electron/**"
+    ]
+  },
+  "thresholds": {
+    "score": 70,
+    "performance": 75,
+    "security": 90,
+    "accessibility": 65,
+    "bundleSize": 80,
+    "codeQuality": 70
+  },
+  "report": {
+    "format": "json",
+    "outputFile": "react-doctor-report.json"
+  }
+}

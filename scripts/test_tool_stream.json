@@ -1,0 +1,29 @@
+{
+  "model": "gpt-5.2-pro",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the weather in Madrid?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get weather in a city",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            }
+          },
+          "required": ["city"]
+        }
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "stream": true
+}
