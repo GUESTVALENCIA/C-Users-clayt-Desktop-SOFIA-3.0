@@ -1,37 +1,37 @@
-# SOFIA 3.0
+# SOFIA 3.0 — Agente de Voz e IA Hiperrealista
 
-Electron + React control app para orquestacion visible de Sofia, MCP y biblioteca RAG de APIs publicas.
+Aplicación de escritorio (Electron + React) para la orquestación de **Sofía**, un agente de voz proactivo especializado en la generación de contenido viral hiperrealista.
 
-## Estado dinamico
-- Ultima actualizacion: 2026-04-03T06:23:34.374Z
-- Version app: 3.0.0
-- MCP total: 35 (configs: 8/9, parseFailures: 1)
-- APIs publicas: 1843 total / 258 usables / 63 noise
-- Context7 detectado en workspaces: 1
-- Lanes de memoria Sofia: 3
+## Estado dinámico
+- Última actualización: 2026-04-03
+- Versión app: 3.0.0
+- Motor LLM: G4F (Ilimitado) + OpenRouter
+- Motor Voz: Deepgram (Aura-2 Karina-ES)
+- Memoria: Neon PostgreSQL (Persistente)
+- Pipeline: Generación de Avatar (Imagen a Vídeo)
 
 ## Prioridad de consulta
-1. Biblioteca RAG local de APIs publicas
-2. Servidores MCP locales y clonados
-3. Context7
-4. Fuentes oficiales externas
+1. G4F (Modelos gratuitos y estables)
+2. OpenRouter (Modelos de alta calidad)
+3. Biblioteca RAG RACK de prompts cinematográficos
+4. Memoria persistente Neon
 
 ## Snapshot operativo
-- MCP primario para datos publicos: sofia-mcp-local
-- Orden canonico: public-api-capability-registry, mcp-tool-priority-map, context7, official-web
-- Teaching manifest: 4 ejemplos operativos
+- Agente principal: Sofia
+- Pipeline de medios: G4F Media Pipeline (Imágenes + Vídeos)
+- Integración de Voz: Deepgram con soporte para interrupción (Barge-in)
+- Modo Worker: Automatización de tareas repetitivas de producción
 
 ## Comandos
 ```bash
 npm run dev
 npm run build
 npm run sync:public-apis
-npm run sync:openclaw-knowledge
 npm run sync:docs
 ```
 
-## Politica de integracion
-- Sofia es el unico nombre oficial.
-- Sofia es la identidad principal del runtime.
-- Las APIs publicas y MCP tienen prioridad sobre Context7 y navegacion general para datos estructurados.
-- No fake UI: todo visible debe estar conectado a estado real o marcado como degraded, blocked, disabled o noise.
+## Política de integración
+- **Sofía** es el único nombre oficial y la identidad principal del sistema.
+- Se prioriza el realismo cinematográfico y la interconexión total entre voz, imagen y vídeo.
+- No OpenClaw: El sistema es independiente de OpenClaw y utiliza G4F nativo.
+- Todo lo visible debe estar conectado al estado real o marcado adecuadamente.

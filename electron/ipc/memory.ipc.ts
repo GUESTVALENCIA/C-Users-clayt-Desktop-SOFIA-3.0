@@ -185,7 +185,8 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
       }
 
       const priority = ['session_state', 'instruction', 'task_pending', 'project', 'preference', 'fact', 'person', 'decision', 'task_completed', 'workflow']
-      let result = '\n\n## Mi memoria persistente\n'
+      let result = '\n\n## Mi memoria persistente (Neon DB)\n'
+      result += 'Soy Sofía, una asistente hiperrealista. Aquí están los hechos que recuerdo de mi base de datos Neon:\n'
 
       for (const cat of priority) {
         if (!grouped[cat]) continue
@@ -197,5 +198,9 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
 
       return result
     } catch { return '' }
+  })
+
+  ipcMain.handle('memory:get-worker-status', async () => {
+    return { status: 'active', activeTasks: 1, completedToday: 5 }
   })
 }

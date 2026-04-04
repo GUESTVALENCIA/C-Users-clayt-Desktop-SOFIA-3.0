@@ -1,61 +1,35 @@
-# SOFIA.md
+# SOFIA.md — Documento Operativo Interno
 
-Documento operativo interno. Se regenera con `npm run sync:docs`.
+## Snapshot del Sistema
+- **Versión**: 3.0.0
+- **Identidad**: Sofía (Voz y Avatar)
+- **Motores**: G4F (Ilimitado), Deepgram (Voz), Neon DB (Memoria)
+- **Status**: Integración Nativa G4F activada.
 
-## Snapshot
-- Timestamp: 2026-04-03T06:23:34.376Z
-- Version app: 3.0.0
-- MCP total: 35
-- Editores: SOFIA 3.0, VS Code, Cursor, Trae, Windsurf, Void
-- APIs publicas: 1843 total / 258 usables
-- MCP primario: sofia-mcp-local
+## Pipeline Hiperrealista
+- **Voz**: Detección de activación "Hola Sofía".
+- **Avatar**: Generación dinámica de imagen estática -> vídeo de 5s -> bucle de 30s.
+- **Sincronización**: Lip-sync facial para máxima credibilidad.
+- **Llamadas**: Bidireccionales con tonos de llamada realistas y descolgado de "click".
 
-## Servidores notables
-- SOFIA 3.0: openclaw-local (http)
-- SOFIA 3.0: context7 (stdio)
-- SOFIA 3.0: g4f-official (stdio)
-- VS Code: github/github-mcp-server (http)
-- VS Code: neondatabase/mcp-server-neon (http)
-- VS Code: figma/mcp-server-guide (http)
-- VS Code: sofia-full-access (http)
-- VS Code: sofia-mcp-native (tcp)
-- VS Code: MCP_DOCKER (stdio)
-- VS Code: ollama (stdio)
-- VS Code: sofia-mcp-native (stdio)
-- Cursor: sofia-mcp-adapter (stdio)
+## Memoria Centralizada
+- **Conversaciones**: Persistentes en Neon PostgreSQL.
+- **Agent Memory**: Almacenamiento de hechos, instrucciones y preferencias de Clay.
+- **Lanes**:
+  - `sofia-product-memory`: Datos del producto y editorial.
+  - `sofia-interaction-memory`: Hechos aprendidos durante llamadas.
 
-## Memoria Sofia / OpenClaw
-- sofia-product-memory | owner: sofia-3.0 | scope: user, project, product, editorial
-- sofia-openclaw-memory | owner: sofia-openclaw | scope: agent, workspace, operational, routing
-- federation-bus | owner: shared-adapters | scope: task-state, booking-state, repair-state, swarm-state
+## Routing de Conocimiento (Prioridad)
+1. **G4F Local Registry**: Modelos estables mapeados por `g4f-proxy-intelligent-v2`.
+2. **OpenRouter**: Modelos de pago/calidad superior como Qwen o Claude-3.5-Sonnet.
+3. **RAG RACK**: Biblioteca cinematográfica de prompts para entornos hiperrealistas.
 
-## Routing de conocimiento
-- 1. public-api-capability-registry | Menor coste en tokens y respuesta mas estructurada.
-- 2. mcp-tool-priority-map | Menor latencia y ejecucion reproducible.
-- 3. openclaw-capability-registry | La base local ya esta curada para este sistema.
-- 4. context7 | Capa de actualizacion controlada.
-- 5. official-web | Ultimo recurso, no primera opcion.
+## Automatización (Worker)
+- Producción repetitiva de contenido multimedia.
+- Autogestión de tareas y generación proactiva.
+- Callback automático tras completar tareas de fondo.
 
-## Curacion de APIs publicas
-- endpoint-real: 259
-- documentation: 424
-- postman-collection: 9
-- landing-page: 953
-- repo: 130
-- issue-tracker: 5
-- noise: 63
-
-## Intenciones MCP
-- Datos publicos estructurados: sofia-mcp-local -> fetch_url
-- Funcionamiento de OpenClaw: openclaw-gateway -> local-registry
-- SDKs y documentacion actualizada: context7 -> context7
-- Archivos y workspace local: openclaw-gateway -> read_file
-- Memoria y vault: openclaw-gateway -> memory_search
-- Computer use y shell: openclaw-gateway -> execute_command
-
-## Regla de mantenimiento
-- Cada implementacion relevante debe ejecutar:
-  - `npm run sync:public-apis`
-  - `npm run sync:openclaw-knowledge`
-  - `npm run sync:docs`
-- Objetivo: mantener README, SOFIA.md, Obsidian y los registros canonicamente alineados.
+## Regla de Mantenimiento
+- Sincronizar APIs públicas regularmente.
+- Mantener la alineación canónica entre este documento y `SOFIA_PIPELINE.md`.
+- No añadir dependencias de OpenClaw.
