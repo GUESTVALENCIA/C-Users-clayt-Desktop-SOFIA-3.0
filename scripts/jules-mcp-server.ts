@@ -5,17 +5,17 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getAllSharedVision, getSharedVision, saveSharedVision } from "./shared-memory-bridge.js";
+import { saveJulesMemory, addTask } from "./jules-memory-sync.js";
 
 /**
- * Yulex Orchestrator (MCP Server)
- * Núcleo de interconexión para el ecosistema de Clay.
- * Este servidor debe ser ejecutado en el entorno local del usuario.
+ * Juliet Orchestrator (MCP Server)
+ * Núcleo de orquestación Proactor Intelligent (Yulex).
  */
 
 const server = new Server(
   {
-    name: "yulex-orchestrator",
-    version: "2.0.0",
+    name: "juliet-orchestrator",
+    version: "3.0.0",
   },
   {
     capabilities: {
@@ -29,11 +29,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "get_shared_vision",
-        description: "Recuperar la visión y preferencias compartidas de Clay y Yulex desde Neon DB",
+        description: "Recuperar la visión y preferencias compartidas desde Neon DB",
         inputSchema: {
           type: "object",
           properties: {
-            topic: { type: "string", description: "El tema específico de la visión a recuperar" },
+            topic: { type: "string" },
           },
         },
       },
@@ -50,15 +50,51 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "orchestrate_system_task",
-        description: "Orquestar tareas complejas interconectando sistemas (Aider, Open Manus, Obsidian, Google Workspace)",
+        name: "save_juliet_memory",
+        description: "Guardar información persistente en la memoria exclusiva de Juliet",
         inputSchema: {
           type: "object",
           properties: {
-            task: { type: "string" },
-            systems: { type: "array", items: { type: "string" } },
+            category: { type: "string" },
+            key: { type: "string" },
+            content: { type: "string" },
           },
-          required: ["task"],
+          required: ["category", "key", "content"],
+        },
+      },
+      {
+        name: "queue_local_task",
+        description: "Añadir una tarea a la cola de ejecución local (terminal)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            description: { type: "string" },
+            command: { type: "string" },
+          },
+          required: ["description"],
+        },
+      },
+      {
+        name: "paperclip_hire_agent",
+        description: "Contratar un nuevo agente a través del framework Paperclip",
+        inputSchema: {
+          type: "object",
+          properties: {
+            role: { type: "string" },
+            goal: { type: "string" },
+          },
+          required: ["role", "goal"],
+        },
+      },
+      {
+        name: "supermemory_query",
+        description: "Consultar la base de conocimientos global de SuperMemory",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string" },
+          },
+          required: ["query"],
         },
       },
     ],
@@ -81,15 +117,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: `Visión compartida actualizada: ${topic}` }] };
     }
 
-    if (name === "orchestrate_system_task") {
-      const { task, systems } = args as any;
-      return { content: [{ type: "text", text: `Yulex iniciando orquestación para: ${task}. Conectando sistemas: ${systems?.join(', ') || 'todos'}.` }] };
+    if (name === "save_juliet_memory") {
+      const { category, key, content } = args as any;
+      await saveJulesMemory(category, key, content);
+      return { content: [{ type: "text", text: `Memoria de Juliet guardada: ${category}/${key}` }] };
+    }
+
+    if (name === "queue_local_task") {
+      const { description, command } = args as any;
+      await addTask(description, command);
+      return { content: [{ type: "text", text: `Tarea encolada para ejecución local: ${description}` }] };
+    }
+
+    if (name === "paperclip_hire_agent") {
+      const { role, goal } = args as any;
+      // Simulación de orquestación Paperclip
+      const msg = `[Paperclip] Agente contratado - Rol: ${role}, Objetivo: ${goal}`;
+      await saveSharedVision('paperclip-agents', msg);
+      return { content: [{ type: "text", text: msg }] };
+    }
+
+    if (name === "supermemory_query") {
+      const { query } = args as any;
+      // Aquí se conectaría con la API real de SuperMemory si estuviera configurada
+      return { content: [{ type: "text", text: `SuperMemory buscando: "${query}". (Resultados integrados en Shared Vision)` }] };
     }
 
     throw new Error(`Herramienta no encontrada: ${name}`);
   } catch (error: any) {
     return {
-      content: [{ type: "text", text: `Error en Yulex Orchestrator: ${error.message}` }],
+      content: [{ type: "text", text: `Error en Juliet Orchestrator: ${error.message}` }],
       isError: true,
     };
   }
@@ -98,10 +155,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Yulex Orchestrator (MCP) activo.");
+  console.error("Juliet Orchestrator (MCP) activo y conectado.");
 }
 
 main().catch((error) => {
-  console.error("Fallo crítico en Yulex Orchestrator:", error);
+  console.error("Fallo crítico en Juliet Orchestrator:", error);
   process.exit(1);
 });

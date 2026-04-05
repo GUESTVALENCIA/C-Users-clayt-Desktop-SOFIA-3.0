@@ -155,7 +155,6 @@ export function WorkspaceChrome({
   const [servers, setServers] = useState<RuntimeServer[]>([])
   const [toolCount, setToolCount] = useState(0)
   const [editorInventory, setEditorInventory] = useState<any>(null)
-  const [openClawLibrary, setOpenClawLibrary] = useState<any>(null)
   const [memoryPolicy, setMemoryPolicy] = useState<any>(null)
   const [publicApiRegistry, setPublicApiRegistry] = useState<any>(null)
   const [knowledgeRouting, setKnowledgeRouting] = useState<any>(null)
@@ -225,7 +224,7 @@ export function WorkspaceChrome({
   const g4fOnline = serverMap.g4f?.status === 'connected'
   const gatewayOnline = false
   const proactorOnline = serverMap.proactor?.status === 'connected'
-  const vaultPath = openClawLibrary?.vaultPath || DEFAULT_VAULT_PATH
+  const vaultPath = DEFAULT_VAULT_PATH
   const leftInsetClass = leftPanel === 'none' ? 'pl-[78px]' : 'pl-[362px]'
   const rightInsetClass = rightPanel === 'none' ? 'pr-[78px]' : 'pr-[382px]'
   const notableServers = editorInventory?.summary?.notableServers ?? []
@@ -246,11 +245,10 @@ export function WorkspaceChrome({
 
   async function refreshRuntime() {
     try {
-      const [serversData, toolsData, inventoryData, libraryData, memoryData, publicApiData, routingData, voiceRuntimeData, knowledgeRuntimeData] = await Promise.all([
+      const [serversData, toolsData, inventoryData, memoryData, publicApiData, routingData, voiceRuntimeData, knowledgeRuntimeData] = await Promise.all([
         window.sofia.mcp.getServers(),
         window.sofia.mcp.getTools(),
         window.sofia.mcp.getEditorInventory(),
-        window.sofia.mcp.getOpenClawLibrary(),
         window.sofia.mcp.getMemoryPolicy(),
         window.sofia.mcp.getPublicApiCapabilityRegistry(),
         window.sofia.mcp.getKnowledgeRoutingPolicy(),
@@ -261,7 +259,6 @@ export function WorkspaceChrome({
       setServers((serversData as any)?.servers ?? [])
       setToolCount((toolsData as any)?.count ?? ((toolsData as any)?.tools?.length ?? 0))
       setEditorInventory(inventoryData)
-      // libraryData not used
       setMemoryPolicy(memoryData)
       setPublicApiRegistry(publicApiData)
       setKnowledgeRouting(routingData)
@@ -712,10 +709,10 @@ export function WorkspaceChrome({
                         await onCreateConversation()
                         onViewChange('chat')
                       }}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-blue-600 to-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition-transform hover:-translate-y-[1px]"
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-accent to-accent-2 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <Plus size={16} />
-                      Nueva conversacion
+                      Nueva Sesión Proactor
                     </button>
                   </div>
 
@@ -1230,7 +1227,6 @@ export function WorkspaceChrome({
                   <div className="grid grid-cols-2 gap-2 px-3">
                     <MetricCard label="APIs" value={publicApiRegistry?.summary?.usableEntries ?? 0} tone="ok" />
                     <MetricCard label="MCP" value={editorInventory?.summary?.totalServers ?? 0} tone="ok" />
-                    <MetricCard label="Notas" value={openClawLibrary?.notes?.length ?? 0} tone="accent" />
                     <MetricCard label="Rutas" value={knowledgeRouting?.consultationOrder?.length ?? 0} tone="accent" />
                     <MetricCard label="Temporal" value={knowledgeRuntime?.executionMode === 'temporal' ? 'ON' : 'FALLBACK'} tone={knowledgeRuntime?.executionMode === 'temporal' ? 'ok' : 'warn'} />
                     <MetricCard label="Graph" value={knowledgeRuntime?.langGraph?.available ? 'READY' : 'OFF'} tone={knowledgeRuntime?.langGraph?.available ? 'ok' : 'warn'} />
@@ -1242,16 +1238,6 @@ export function WorkspaceChrome({
                       <div className="space-y-3">
                         <PanelCard title="Proveedores + APIs publicas">
                           <div className="grid gap-2">
-                            <div className="rounded-2xl border border-line bg-bg/60 px-3 py-3">
-                              <div className="text-sm font-semibold text-text">{openClawLibrary?.notes?.length ?? 0} notas sincronizadas</div>
-                              <div className="mt-1 text-xs text-muted">Ultima sync: {formatTimestamp(openClawLibrary?.generatedAt)}</div>
-                              <button
-                                onClick={() => handleAction('open-vault-folder')}
-                                className="mt-3 rounded-xl border border-line bg-panel-2 px-3 py-2 text-xs font-semibold text-text transition-colors hover:border-accent/50"
-                              >
-                                Abrir vault
-                              </button>
-                            </div>
                             <div className="rounded-2xl border border-line bg-bg/60 px-3 py-3">
                               <div className="text-sm font-semibold text-text">{publicApiRegistry?.summary?.usableEntries ?? 0} APIs usables</div>
                               <div className="mt-1 text-xs text-muted">Noise filtrado: {publicApiRegistry?.summary?.noiseEntries ?? 0}</div>
@@ -1706,9 +1692,9 @@ function wait(ms: number) {
 }
 
 const ACTION_ITEMS = [
-  { id: 'new', label: 'Nueva conversacion', description: 'Crear un hilo nuevo', icon: Plus },
+  { id: 'new', label: 'Nueva Sesión Proactor', description: 'Iniciar orquestación Juliet', icon: Plus },
   { id: 'terminal', label: 'Terminal', description: 'Abrir lane Aider local', icon: TerminalSquare },
-  { id: 'builder', label: 'Builder', description: 'Abrir panel G4F', icon: LayoutGrid },
+  { id: 'builder', label: 'Fábrica de Workers', description: 'Abrir panel G4F', icon: LayoutGrid },
   { id: 'browser', label: 'Browser', description: 'Abrir panel G4F', icon: Monitor },
   { id: 'vault', label: 'Vault', description: 'Ir a memoria operativa', icon: Brain },
   { id: 'parallel', label: 'Parallel 5x', description: 'Lanzar cinco ventanas auxiliares', icon: PanelLeftOpen },

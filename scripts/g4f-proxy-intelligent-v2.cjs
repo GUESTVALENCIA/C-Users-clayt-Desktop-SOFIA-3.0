@@ -68,7 +68,14 @@ const PREFIX_MAP = {
   'veo-': ['PollinationsAI', 'OperaAria', 'Yqcloud'],
   
   // Por defecto (cualquier otro modelo)
-  '*': ['OperaAria', 'Yqcloud']
+  '*': ['OperaAria', 'Yqcloud'],
+
+  // NATI/NATASHA - Modelos sin censura (Uncensored)
+  'uncensored-': ['DeepInfra', 'PollinationsAI', 'Yqcloud'],
+  'flux-uncensored': ['PollinationsAI'],
+  'hermes-': ['DeepInfra', 'Groq'],
+  'dolphin-': ['DeepInfra', 'Yqcloud'],
+  'veo-3.1-uncensored': ['PollinationsAI']
 };
 
 // Historial de fallos por proveedor (para evitar reintentar proveedores caídos)
@@ -141,6 +148,18 @@ const server = http.createServer((req, res) => {
         const p = JSON.parse(body);
         originalModel = p.model || 'gpt-3.5-turbo';
         
+        // Detección de Agente Nati/Natasha para forzar modelos sin censura
+        const isNatiRequest = p.messages?.some(m =>
+          m.content?.toLowerCase().includes('nati') ||
+          m.content?.toLowerCase().includes('natasha') ||
+          m.content?.toLowerCase().includes('uncensored')
+        );
+
+        if (isNatiRequest && !originalModel.startsWith('uncensored-')) {
+          console.log(`[proxy-nati] Detectada petición Nati. Forzando modelo sin censura.`);
+          originalModel = 'uncensored-llama-3-8b'; // Modelo base sin censura
+        }
+
         // Obtener proveedores disponibles para este modelo
         const availableProviders = getProvidersForModel(originalModel);
         selectedProvider = chooseProvider(availableProviders);

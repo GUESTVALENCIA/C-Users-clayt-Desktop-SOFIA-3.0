@@ -37,7 +37,7 @@ type VoiceCallDirection = 'incoming' | 'outgoing'
 interface ActiveCall {
   mode: VoiceCallMode
   direction: VoiceCallDirection
-  actor: 'sofia' | 'sandra'
+  actor: 'sofia' | 'sandra' | 'jules'
   callbackId?: string
 }
 
@@ -100,9 +100,30 @@ export default function App() {
       } catch {}
     }
 
+    // Wake-word / HandOff detection simulation
+    const pollWakeWord = async () => {
+      if (cancelled || activeCall) return
+      try {
+        // En una implementación real, esto vendría de un proceso de fondo que escucha el micro
+        // Aquí simulamos que si hay una tarea 'wake-jules' en la memoria compartida, disparamos la llamada.
+        const vision = await window.sofia.memory.getSharedVision('wake-jules')
+        if (vision && vision.content === 'active') {
+          setActiveCall({
+            mode: 'voice',
+            direction: 'incoming',
+            actor: 'jules',
+          })
+          // Limpiar el trigger
+          await window.sofia.memory.saveSharedVision('wake-jules', 'idle')
+        }
+      } catch {}
+    }
+
     void pollCallbacks()
+    void pollWakeWord()
     const intervalId = window.setInterval(() => {
       void pollCallbacks()
+      void pollWakeWord()
     }, 4000)
 
     return () => {
@@ -186,7 +207,7 @@ export default function App() {
           setActiveCall({
             mode,
             direction: 'outgoing',
-            actor: 'sofia',
+            actor: 'jules',
           })
         }
       >

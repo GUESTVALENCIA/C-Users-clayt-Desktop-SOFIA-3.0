@@ -5,7 +5,7 @@ import type { ChatMessage } from '../../app/App'
 type CallState = 'ringing' | 'connecting' | 'listening' | 'speaking' | 'ended'
 type CallMode = 'voice' | 'avatar'
 type CallDirection = 'incoming' | 'outgoing'
-type CallActor = 'sofia' | 'sandra'
+type CallActor = 'sofia' | 'sandra' | 'jules'
 
 interface AvatarScene {
   id: string
@@ -156,7 +156,7 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
             await window.sofia.voice.queueCallback({
               actor: 'sandra',
               mode,
-              reason: msg.data?.task?.description || 'Callback de OpenClaw pendiente',
+              reason: msg.data?.task?.description || 'Seguimiento Proactor pendiente',
               sceneId: avatarScene?.id ?? null,
               source: 'voice-shadow-task',
               voiceSessionId: sessionIdRef.current,
@@ -371,11 +371,26 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
     ended: '#9aa6b2',
   }
 
-  const actorLabel = 'Sofia'
+  const actorLabel = actor === 'jules' ? 'Juliet (Yulex)' : actor === 'sandra' ? 'Sandra' : 'Sofia'
   const canAcceptIncoming = direction === 'incoming' && state === 'ringing'
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/95">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/95 backdrop-blur-xl">
+      {direction === 'incoming' && state === 'ringing' && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-md animate-in slide-in-from-top-10 duration-500">
+          <div className="mx-4 p-6 rounded-[2.5rem] bg-panel-2 border border-accent/50 card-shadow flex items-center gap-5">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center text-white shadow-lg shadow-accent/20">
+              <PhoneIncoming size={32} />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-accent mb-1">HandOff Detectado</div>
+              <div className="text-lg font-bold text-text">Llamada de {actorLabel}</div>
+              <div className="text-xs text-muted font-medium mt-1">"Hola Jules" wake-word activada.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 text-center">
         <div className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
           {actorLabel} · {mode === 'avatar' ? 'Avatar call' : 'Voice call'}
