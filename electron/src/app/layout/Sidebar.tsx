@@ -23,8 +23,8 @@ export function Sidebar({ conversations, activeId, onSelect, onNew, onDelete, vi
             boxShadow: '0 8px 30px rgba(99,102,241,.4)',
           }} />
           <div>
-            <h1 className="text-lg font-bold text-text leading-tight tracking-tight">Proactor</h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-semibold">Intelligent</p>
+            <h1 className="text-lg font-bold text-text leading-tight tracking-tight">JULIE</h1>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-semibold">Proactor Intelligent</p>
           </div>
         </div>
         <button
