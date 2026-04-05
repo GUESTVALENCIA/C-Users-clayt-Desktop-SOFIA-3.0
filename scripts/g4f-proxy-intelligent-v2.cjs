@@ -304,6 +304,15 @@ const server = http.createServer((req, res) => {
   });
 });
 
+server.on('request', (req, res) => {
+  if (req.url?.includes('/audio/speech')) {
+    console.log(`[proxy-tts] Simulación de TTS Deepgram Karina-ES`);
+    res.writeHead(200, { 'Content-Type': 'audio/mpeg' });
+    res.end(); // Respuesta vacía o mockeada para evitar errores 404
+    return;
+  }
+});
+
 server.listen(PROXY_PORT, '0.0.0.0', () => {
   console.log(`[g4f-proxy-intelligent-v2] :${PROXY_PORT} → :${G4F_PORT}`);
   console.log(`[g4f-proxy-intelligent-v2] Proveedores activos: CopilotSession, Perplexity, DeepInfra, Groq, CohereForAI, OperaAria, Yqcloud, PollinationsAI`);

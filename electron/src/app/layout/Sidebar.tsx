@@ -46,13 +46,13 @@ export function Sidebar({ conversations, activeId, onSelect, onNew, onDelete, vi
         />
         <NavItem
           icon={Mic}
-          label="Comenzar chat"
+          label="Conversación"
           onClick={() => onViewChange('chat')}
           active={view === 'chat'}
         />
         <NavItem
           icon={History}
-          label="Historial"
+          label="Historial (Sessions)"
           onClick={() => {}}
           active={false}
         />

@@ -38,6 +38,16 @@ async function init() {
       )
     `;
 
+    // Tabla de sesiones para el HandOff / Task Watcher
+    await sql`
+      CREATE TABLE IF NOT EXISTS app_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        active BOOLEAN DEFAULT true,
+        last_activity TIMESTAMPTZ DEFAULT now(),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `;
+
     console.log('Esquemas creados correctamente.');
   } catch (e) {
     console.error('Error al crear esquemas:', e);
