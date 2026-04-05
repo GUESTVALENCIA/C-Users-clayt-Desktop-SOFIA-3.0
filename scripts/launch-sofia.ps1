@@ -1,10 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$LaunchCmdPath = Join-Path $RepoRoot 'launch-sofia.cmd'
-$LaunchSilentPath = Join-Path $RepoRoot 'launch-sofia.vbs'
+$LaunchCmdPath = Join-Path $RepoRoot 'launch-julie.cmd'
+$LaunchSilentPath = Join-Path $RepoRoot 'launch-julie.vbs'
 $DesktopPath = [Environment]::GetFolderPath('Desktop')
-$LogDir = Join-Path $env:APPDATA 'sofia\logs'
+$LogDir = Join-Path $env:APPDATA 'julie\logs'
 $LogPath = Join-Path $LogDir 'launcher.log'
 $MutexName = 'Local\SOFIA-3-Workspace-Launcher'
 
@@ -72,13 +72,13 @@ function Repair-DesktopShortcuts {
     $shortcut = $shell.CreateShortcut($_.FullName)
     $target = $shortcut.TargetPath
 
-    $looksLikeSofiaShortcut =
+    $looksLikeJulieShortcut =
       $_.Name -like '*SOF*' -or
       $target -like '*SOFÍA*' -or
-      $target -like '*sofia*' -or
+      $target -like '*julie*' -or
       $target -like '*release-ui*'
 
-    if (-not $looksLikeSofiaShortcut) {
+    if (-not $looksLikeJulieShortcut) {
       return
     }
 

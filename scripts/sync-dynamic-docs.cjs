@@ -28,7 +28,7 @@ function safeList(values) {
 function canonicalizePresentationName(value) {
   return String(value || '')
     .replace(/opencloud/gi, 'openclaw')
-    .replace(/sandra/gi, 'sofia')
+    .replace(/sandra/gi, 'julie')
 }
 
 function generateReadme(pkg, inventory, libraryIndex, memoryPolicy, openClawRegistry, routingPolicy, publicApiRegistry, teachingManifest) {
@@ -39,7 +39,7 @@ function generateReadme(pkg, inventory, libraryIndex, memoryPolicy, openClawRegi
 
   return `# SOFIA 3.0
 
-Electron + React control app para orquestacion visible de Sofia sobre OpenClaw, MCP y biblioteca RAC de APIs publicas.
+Electron + React control app para orquestacion visible de Julie sobre OpenClaw, MCP y biblioteca RAC de APIs publicas.
 
 ## Estado dinamico
 - Ultima actualizacion: ${nowIso()}
@@ -48,7 +48,7 @@ Electron + React control app para orquestacion visible de Sofia sobre OpenClaw, 
 - APIs publicas: ${publicSummary.totalEntries ?? 0} total / ${publicSummary.usableEntries ?? 0} usables / ${publicSummary.noiseEntries ?? 0} noise
 - OpenClaw capabilities: ${capabilitySummary.totalCapabilities ?? 0}
 - Context7 detectado en workspaces: ${(summary.context7Detected ?? []).length}
-- Lanes de memoria Sofia/OpenClaw: ${(memoryPolicy.lanes ?? []).length}
+- Lanes de memoria Julie/OpenClaw: ${(memoryPolicy.lanes ?? []).length}
 
 ## Prioridad de consulta
 1. Biblioteca RAC local de APIs publicas
@@ -74,13 +74,13 @@ npm run sync:docs
 
 ## Politica de integracion
 - OpenClaw es el unico nombre oficial.
-- Sofia es la identidad principal del runtime.
+- Julie es la identidad principal del runtime.
 - Las APIs publicas y MCP tienen prioridad sobre Context7 y navegacion general para datos estructurados.
 - No fake UI: todo visible debe estar conectado a estado real o marcado como degraded, blocked, disabled o noise.
 `
 }
 
-function generateSofiaMd(pkg, inventory, libraryIndex, memoryPolicy, routingPolicy, publicApiRegistry, mcpToolPriorityMap) {
+function generateJulieMd(pkg, inventory, libraryIndex, memoryPolicy, routingPolicy, publicApiRegistry, mcpToolPriorityMap) {
   const summary = inventory.summary || {}
   const notable = Array.isArray(summary.notableServers) ? summary.notableServers.slice(0, 12) : []
   const lanes = Array.isArray(memoryPolicy.lanes) ? memoryPolicy.lanes : []
@@ -123,7 +123,7 @@ Documento operativo interno. Se regenera con \`npm run sync:docs\`.
 ## Servidores notables
 ${notableLines}
 
-## Memoria Sofia / OpenClaw
+## Memoria Julie / OpenClaw
 ${laneLines}
 
 ## Routing de conocimiento
@@ -156,10 +156,10 @@ function main() {
   const publicApiRegistry = readJson(path.join(PUBLIC_API_ROOT, 'public-api-capability-registry.json'), {})
 
   const readme = generateReadme(pkg, inventory, libraryIndex, memoryPolicy, openClawRegistry, routingPolicy, publicApiRegistry, teachingManifest)
-  const sofiaMd = generateSofiaMd(pkg, inventory, libraryIndex, memoryPolicy, routingPolicy, publicApiRegistry, mcpToolPriorityMap)
+  const julieMd = generateJulieMd(pkg, inventory, libraryIndex, memoryPolicy, routingPolicy, publicApiRegistry, mcpToolPriorityMap)
 
   fs.writeFileSync(README_PATH, readme, 'utf8')
-  fs.writeFileSync(SOFIA_MD_PATH, sofiaMd, 'utf8')
+  fs.writeFileSync(SOFIA_MD_PATH, julieMd, 'utf8')
 
   process.stdout.write(`synced docs: README.md + SOFIA.md @ ${nowIso()}\n`)
 }

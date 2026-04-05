@@ -1,6 +1,6 @@
-# SOFIA 3.0 — Agente de Voz e IA Hiperrealista
+# JULIE 3.0 — Agente de Voz e IA Hiperrealista
 
-Aplicación de escritorio (Electron + React) para la orquestación de **Sofía**, un agente de voz proactivo especializado en la generación de contenido viral hiperrealista.
+Aplicación de escritorio (Electron + React) para la orquestación de **Julie**, un agente de voz proactivo especializado en la generación de contenido viral hiperrealista.
 
 ## Estado dinámico
 - Última actualización: 2026-04-03
@@ -17,7 +17,7 @@ Aplicación de escritorio (Electron + React) para la orquestación de **Sofía**
 4. Memoria persistente Neon
 
 ## Snapshot operativo
-- Agente principal: Sofia
+- Agente principal: Julie
 - Pipeline de medios: G4F Media Pipeline (Imágenes + Vídeos)
 - Integración de Voz: Deepgram con soporte para interrupción (Barge-in)
 - Modo Worker: Automatización de tareas repetitivas de producción
@@ -31,7 +31,7 @@ npm run sync:docs
 ```
 
 ## Política de integración
-- **Sofía** es el único nombre oficial y la identidad principal del sistema.
+- **Julie** es el único nombre oficial y la identidad principal del sistema.
 - Se prioriza el realismo cinematográfico y la interconexión total entre voz, imagen y vídeo.
 - No OpenClaw: El sistema es independiente de OpenClaw y utiliza G4F nativo.
 - Todo lo visible debe estar conectado al estado real o marcado adecuadamente.
