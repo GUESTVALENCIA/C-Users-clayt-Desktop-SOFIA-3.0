@@ -14,47 +14,49 @@ interface SidebarProps {
 
 export function Sidebar({ conversations, activeId, onSelect, onNew, onDelete, view, onViewChange }: SidebarProps) {
   return (
-    <aside className="w-[280px] shrink-0 border-r border-line bg-panel flex flex-col h-full">
+    <aside className="w-[260px] shrink-0 bg-panel/50 backdrop-blur-xl border-r border-slate-800/50 flex flex-col h-full">
       {/* Brand */}
-      <div className="p-4 border-b border-line">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl shadow-lg" style={{
-            background: 'radial-gradient(circle at 30% 30%, #7dd3fc, #2563eb)',
-            boxShadow: '0 10px 30px rgba(37,99,235,.35)',
-          }} />
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-9 h-9 rounded-2xl flex items-center justify-center bg-blue-600 shadow-xl shadow-blue-500/20">
+             <Brain className="text-white" size={20} />
+          </div>
           <div>
-            <h1 className="text-base font-bold text-text leading-tight">SOFÍA</h1>
-            <p className="text-xs text-muted">Asistente IA de Clay</p>
+            <h1 className="text-lg font-bold tracking-tight text-white leading-none">SOFÍA</h1>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500 mt-1">Intelligence Lab</p>
           </div>
         </div>
+
         <button
           onClick={onNew}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 text-white text-sm font-semibold hover:from-blue-500 hover:to-blue-600 transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition-all duration-200 active:scale-[0.98]"
         >
-          <Plus size={16} />
-          Nueva conversación
+          <Plus size={18} />
+          Nuevo Chat
         </button>
       </div>
 
       {/* Conversations */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar">
+        <h2 className="px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Recientes</h2>
         {conversations.length === 0 && (
-          <p className="text-xs text-muted text-center py-8">Sin conversaciones</p>
+          <p className="text-xs text-slate-600 px-2 py-4 italic text-center">No hay historial</p>
         )}
         {conversations.map(c => (
           <div
             key={c.id}
             onClick={() => onSelect(c.id)}
-            className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer text-sm transition-all ${
+            className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-[13px] font-medium transition-all duration-200 ${
               activeId === c.id
-                ? 'bg-panel-2 border border-line text-text'
-                : 'text-muted hover:bg-panel-2/50 hover:text-text border border-transparent'
+                ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-lg shadow-blue-500/5'
+                : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'
             }`}
           >
-            <span className="flex-1 truncate">{c.title || 'Sin título'}</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${activeId === c.id ? 'bg-blue-500' : 'bg-slate-700'}`} />
+            <span className="flex-1 truncate">{c.title || 'Conversación'}</span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(c.id) }}
-              className="opacity-0 group-hover:opacity-100 text-muted hover:text-error transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
             >
               <Trash2 size={14} />
             </button>
@@ -63,23 +65,27 @@ export function Sidebar({ conversations, activeId, onSelect, onNew, onDelete, vi
       </div>
 
       {/* Bottom nav */}
-      <div className="p-2 border-t border-line space-y-1">
+      <div className="p-4 mt-auto border-t border-slate-800/50 space-y-1">
         <button
           onClick={() => onViewChange('settings')}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-            view === 'settings' ? 'bg-panel-2 text-text border border-line' : 'text-muted hover:bg-panel-2/50 hover:text-text border border-transparent'
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-medium transition-all ${
+            view === 'settings'
+              ? 'bg-white/10 text-white border border-white/10 shadow-lg shadow-black/20'
+              : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'
           }`}
         >
-          <Settings size={16} /> Configuración
+          <Settings size={18} /> Configuración
         </button>
-        <button
-          onClick={() => onViewChange('memory')}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-            view === 'memory' ? 'bg-panel-2 text-text border border-line' : 'text-muted hover:bg-panel-2/50 hover:text-text border border-transparent'
-          }`}
-        >
-          <Brain size={16} /> Memoria
-        </button>
+
+        <div className="mt-4 pt-4 border-t border-slate-800/20 flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">System Online</span>
+            </div>
+            <button className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+                <Mic size={14} />
+            </button>
+        </div>
       </div>
     </aside>
   )

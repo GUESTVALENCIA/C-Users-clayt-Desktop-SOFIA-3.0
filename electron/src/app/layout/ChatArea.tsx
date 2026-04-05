@@ -772,7 +772,13 @@ export function ChatArea({
   }
 
   return (
-    <div className="relative flex h-full flex-1 flex-col overflow-hidden">
+    <div className="relative flex h-full flex-1 flex-col overflow-hidden bg-slate-950">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-600/5 blur-[120px] rounded-full" />
+      </div>
+
       <RouterMetrics
         provider={selectedProvider}
         model={selectedModel}
@@ -784,7 +790,8 @@ export function ChatArea({
         apiKeys={apiKeys}
         routerNotice={routerNotice}
       />
-      <div className="min-h-0 flex-1 overflow-hidden pb-[calc(190px+var(--terminal-tray-height,0px))]">
+
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <MessageList
           messages={messages}
           streamingText={streamingText}
@@ -792,12 +799,14 @@ export function ChatArea({
           toolTrace={toolTrace}
           routerNotice={routerNotice}
         />
+        {/* Bottom Fade */}
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none z-10" />
       </div>
+
       <div
-        className="pointer-events-none absolute inset-x-0 z-10 flex justify-center px-6"
-        style={{ bottom: 'calc(26px + var(--terminal-tray-height, 0px))' }}
+        className="relative z-20 flex justify-center px-6 pb-8"
       >
-        <div className="pointer-events-auto w-full max-w-5xl">
+        <div className="w-full max-w-5xl">
           <ChatInput
             onSend={sendMessage}
             onAbort={handleAbort}
