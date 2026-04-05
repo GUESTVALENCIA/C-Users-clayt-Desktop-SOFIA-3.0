@@ -17,9 +17,9 @@ export async function saveJulesMemory(category: string, key: string, content: st
         content = EXCLUDED.content,
         updated_at = now()
     `;
-    console.log(`[Juliet Memory] Guardado: ${category}/${key}`);
+    console.log(`[Julie Memory] Guardado: ${category}/${key}`);
   } catch (e) {
-    console.error(`[Juliet Memory] Error:`, e);
+    console.error(`[Julie Memory] Error:`, e);
   }
 }
 
@@ -29,8 +29,8 @@ export async function addTask(description: string, command?: string) {
       INSERT INTO local_tasks (description, command, status)
       VALUES (${description}, ${command || null}, 'pending')
     `;
-    console.log(`[Juliet Tasks] Tarea añadida: ${description}`);
+    console.log(`[Julie Tasks] Tarea añadida: ${description}`);
   } catch (e) {
-    console.error(`[Juliet Tasks] Error:`, e);
+    console.error(`[Julie Tasks] Error:`, e);
   }
 }

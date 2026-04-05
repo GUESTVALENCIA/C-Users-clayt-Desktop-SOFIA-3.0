@@ -8,7 +8,7 @@ import { getAllSharedVision, getSharedVision, saveSharedVision } from "./shared-
 import { saveJulesMemory, addTask } from "./jules-memory-sync.js";
 
 /**
- * Juliet Orchestrator (MCP Server)
+ * Julie Orchestrator (MCP Server)
  * Núcleo de orquestación Proactor Intelligent (Yulex).
  */
 
@@ -51,7 +51,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "save_juliet_memory",
-        description: "Guardar información persistente en la memoria exclusiva de Juliet",
+        description: "Guardar información persistente en la memoria exclusiva de Julie",
         inputSchema: {
           type: "object",
           properties: {
@@ -120,7 +120,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === "save_juliet_memory") {
       const { category, key, content } = args as any;
       await saveJulesMemory(category, key, content);
-      return { content: [{ type: "text", text: `Memoria de Juliet guardada: ${category}/${key}` }] };
+      return { content: [{ type: "text", text: `Memoria de Julie guardada: ${category}/${key}` }] };
     }
 
     if (name === "queue_local_task") {
@@ -146,7 +146,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Herramienta no encontrada: ${name}`);
   } catch (error: any) {
     return {
-      content: [{ type: "text", text: `Error en Juliet Orchestrator: ${error.message}` }],
+      content: [{ type: "text", text: `Error en Julie Orchestrator: ${error.message}` }],
       isError: true,
     };
   }
@@ -155,10 +155,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Juliet Orchestrator (MCP) activo y conectado.");
+  console.error("Julie Orchestrator (MCP) activo y conectado.");
 }
 
 main().catch((error) => {
-  console.error("Fallo crítico en Juliet Orchestrator:", error);
+  console.error("Fallo crítico en Julie Orchestrator:", error);
   process.exit(1);
 });

@@ -371,7 +371,7 @@ export function VoiceCallModal({ mode, direction, actor, onClose }: VoiceCallMod
     ended: '#9aa6b2',
   }
 
-  const actorLabel = actor === 'jules' ? 'Juliet (Yulex)' : actor === 'sandra' ? 'Sandra' : 'Sofia'
+  const actorLabel = actor === 'jules' ? 'Julie (Yulex)' : actor === 'sandra' ? 'Sandra' : 'Sofia'
   const canAcceptIncoming = direction === 'incoming' && state === 'ringing'
 
   return (

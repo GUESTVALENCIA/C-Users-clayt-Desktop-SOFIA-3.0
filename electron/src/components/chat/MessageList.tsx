@@ -31,7 +31,7 @@ export function MessageList({ messages, streamingText, isStreaming, toolTrace, r
             }} />
             <h2 className="text-4xl font-black text-text mb-4 text-glow tracking-tighter">CENTRO DE MANDO PROACTOR</h2>
             <p className="text-lg text-muted max-w-2xl mx-auto leading-relaxed">
-              Soberanía Digital activada. <span className="text-accent font-bold">Juliet (Yulex)</span> orquestando la producción
+              Soberanía Digital activada. <span className="text-accent font-bold">Julie (Yulex)</span> orquestando la producción
               multimedia y la red de agentes autónomos.
             </p>
           </div>
@@ -101,7 +101,7 @@ export function MessageList({ messages, streamingText, isStreaming, toolTrace, r
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-panel-2 border border-line text-xs font-medium text-text/60 group-hover:translate-x-2 transition-transform delay-75">
                   <CheckCircle2 size={12} className="text-emerald-500" />
-                  Configuración inicial de Neon DB Juliet
+                  Configuración inicial de Neon DB Julie
                 </div>
               </div>
             </div>

@@ -10,10 +10,10 @@ if (!url) {
 const sql = neon(url);
 
 async function init() {
-  console.log('Iniciando esquemas de Juliet...');
+  console.log('Iniciando esquemas de Julie...');
 
   try {
-    // Memoria independiente de Juliet
+    // Memoria independiente de Julie
     await sql`
       CREATE TABLE IF NOT EXISTS jules_memory (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,6 +35,16 @@ async function init() {
         result TEXT,
         created_at TIMESTAMPTZ DEFAULT now(),
         updated_at TIMESTAMPTZ DEFAULT now()
+      )
+    `;
+
+    // Tabla de sesiones para el HandOff / Task Watcher
+    await sql`
+      CREATE TABLE IF NOT EXISTS app_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        active BOOLEAN DEFAULT true,
+        last_activity TIMESTAMPTZ DEFAULT now(),
+        created_at TIMESTAMPTZ DEFAULT now()
       )
     `;
 

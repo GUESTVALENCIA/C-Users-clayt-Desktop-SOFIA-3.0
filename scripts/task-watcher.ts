@@ -26,7 +26,7 @@ async function checkAndRunTasks() {
     console.log(`[Task Watcher] Encontradas ${pendingTasks.length} tareas para procesar.`);
 
     for (const task of pendingTasks) {
-      console.log(`[Task Watcher] Ejecutando tarea Juliet: ${task.description}`);
+      console.log(`[Task Watcher] Ejecutando tarea Julie: ${task.description}`);
 
       await sql`UPDATE local_tasks SET status = 'running', updated_at = now() WHERE id = ${task.id}`;
       await saveSharedVision('local-task-status', `Ejecutando: ${task.description}`);
@@ -47,7 +47,7 @@ async function checkAndRunTasks() {
           // Notificación visual de éxito en la UI via Shared Vision
           await saveSharedVision('task-notification', `Completada: ${task.description}`);
         } else {
-          // Tareas de IA pura que no requieren comando shell pero sí orquestación Juliet
+          // Tareas de IA pura que no requieren comando shell pero sí orquestación Julie
           await sql`UPDATE local_tasks SET status = 'processed_by_juliet', updated_at = now() WHERE id = ${task.id}`;
           await saveSharedVision('local-task-status', `Tarea de orquestación finalizada: ${task.description}`);
         }
@@ -63,7 +63,28 @@ async function checkAndRunTasks() {
   }
 }
 
+async function monitorWebSession() {
+  try {
+    const session = await sql`SELECT * FROM app_sessions WHERE active = true ORDER BY last_activity DESC LIMIT 1`;
+    if (session.length > 0) {
+      const lastActivity = new Date(session[0].last_activity).getTime();
+      const now = Date.now();
+      // Si la sesión web ha estado inactiva por más de 2 minutos, procedemos con las tareas locales
+      if (now - lastActivity > 120000) {
+        await checkAndRunTasks();
+      }
+    } else {
+      // Si no hay sesiones activas, procedemos
+      await checkAndRunTasks();
+    }
+  } catch (e) {
+    console.error(`[Task Watcher] Error monitoreando sesión:`, e);
+    // Fallback: procesar de todos modos si hay error en la tabla de sesiones
+    await checkAndRunTasks();
+  }
+}
+
 // Ejecutar cada 30 segundos
-console.log('[Task Watcher] Iniciado. Vigilando local_tasks...');
-setInterval(checkAndRunTasks, 30000);
-checkAndRunTasks();
+console.log('[Task Watcher] Iniciado. Vigilando local_tasks e inactividad web...');
+setInterval(monitorWebSession, 30000);
+monitorWebSession();
