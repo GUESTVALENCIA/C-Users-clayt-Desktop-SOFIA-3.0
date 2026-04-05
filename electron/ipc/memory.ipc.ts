@@ -50,6 +50,15 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
         updated_at TIMESTAMPTZ DEFAULT now(),
         UNIQUE(category, key)
       )`
+      await db`CREATE TABLE IF NOT EXISTS shared_vision (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        topic VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        version INTEGER DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(topic)
+      )`
       console.log('[Memory] Schema initialized')
       return { ok: true }
     } catch (e: any) {
@@ -202,5 +211,40 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
 
   ipcMain.handle('memory:get-worker-status', async () => {
     return { status: 'active', activeTasks: 1, completedToday: 5 }
+  })
+
+  // Shared Vision (Clay & Jules Layer)
+  ipcMain.handle('memory:shared-vision:get', async (_e, topic: string) => {
+    const db = await getSQL()
+    if (!db) return null
+    try {
+      const rows = await db`SELECT * FROM shared_vision WHERE topic = ${topic}`
+      return rows[0] || null
+    } catch { return null }
+  })
+
+  ipcMain.handle('memory:shared-vision:save', async (_e, params: any) => {
+    const db = await getSQL()
+    if (!db) return false
+    try {
+      await db`INSERT INTO shared_vision (topic, content)
+        VALUES (${params.topic}, ${params.content})
+        ON CONFLICT (topic) DO UPDATE SET
+          content = EXCLUDED.content,
+          version = shared_vision.version + 1,
+          updated_at = now()`
+      return true
+    } catch (e: any) {
+      console.error('[Memory] Save shared vision failed:', e)
+      return false
+    }
+  })
+
+  ipcMain.handle('memory:shared-vision:get-all', async () => {
+    const db = await getSQL()
+    if (!db) return []
+    try {
+      return await db`SELECT * FROM shared_vision ORDER BY updated_at DESC`
+    } catch { return [] }
   })
 }
