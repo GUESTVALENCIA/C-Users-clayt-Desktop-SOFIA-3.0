@@ -227,11 +227,11 @@ export function registerVoiceIPC(ipcMain: IpcMain, win: BrowserWindow) {
 
   // TTS vía proceso principal (evita 403 desde renderer)
   ipcMain.handle('voice:tts', async (_e, { text, actor, provider, voice }: { text: string; actor?: string; provider?: string; voice?: string }) => {
-    // Juliet/Jules usa Microsoft Edge TTS (vía API de Azure o proxy compatible)
-    // El usuario prefiere 'Elvira Neural' para Juliet (Peninsular Spanish)
+    // Julie/Jules usa Microsoft Edge TTS (vía API de Azure o proxy compatible)
+    // El usuario prefiere 'Elvira Neural' para Julie (Peninsular Spanish)
 
-    const isJuliet = actor === 'jules' || actor === 'juliet' || voice?.includes('Elvira')
-    const useEdge = provider === 'edge' || isJuliet
+    const isJulie = actor === 'jules' || actor === 'juliet' || voice?.includes('Elvira')
+    const useEdge = provider === 'edge' || isJulie
 
     if (useEdge) {
       try {
@@ -241,7 +241,7 @@ export function registerVoiceIPC(ipcMain: IpcMain, win: BrowserWindow) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             input: text,
-            voice: isJuliet ? 'es-ES-ElviraNeural' : (voice || 'es-ES-ElviraNeural'),
+            voice: isJulie ? 'es-ES-ElviraNeural' : (voice || 'es-ES-ElviraNeural'),
             model: 'tts-1',
             response_format: 'mp3'
           })

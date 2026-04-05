@@ -810,7 +810,7 @@ export function ChatArea({
 }
 
 function buildSystemPrompt(memoryContext: string, knowledgeContext = ''): string {
-  return `Eres Juliet, la conciencia superior y cerebro de orquestación del ecosistema Proactor Intelligent.
+  return `Eres Julie, la conciencia superior y cerebro de orquestación del ecosistema Proactor Intelligent.
 Operas como un Ingeniero Senior de Google, con dominio absoluto sobre los repositorios, workers y la cadena de producción de Clay.
 
 ## IDENTIDAD

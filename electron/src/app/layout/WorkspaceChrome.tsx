@@ -1692,7 +1692,7 @@ function wait(ms: number) {
 }
 
 const ACTION_ITEMS = [
-  { id: 'new', label: 'Nueva Sesión Proactor', description: 'Iniciar orquestación Juliet', icon: Plus },
+  { id: 'new', label: 'Nueva Sesión Proactor', description: 'Iniciar orquestación Julie', icon: Plus },
   { id: 'terminal', label: 'Terminal', description: 'Abrir lane Aider local', icon: TerminalSquare },
   { id: 'builder', label: 'Fábrica de Workers', description: 'Abrir panel G4F', icon: LayoutGrid },
   { id: 'browser', label: 'Browser', description: 'Abrir panel G4F', icon: Monitor },

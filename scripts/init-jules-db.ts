@@ -10,10 +10,10 @@ if (!url) {
 const sql = neon(url);
 
 async function init() {
-  console.log('Iniciando esquemas de Juliet...');
+  console.log('Iniciando esquemas de Julie...');
 
   try {
-    // Memoria independiente de Juliet
+    // Memoria independiente de Julie
     await sql`
       CREATE TABLE IF NOT EXISTS jules_memory (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -8,7 +8,7 @@ async function interconnect() {
   console.log('--- Interconectando Google Workspace CLI & Google CC ---');
 
   const googleConfig = {
-    'google-workspace-status': 'Sincronizado vía Juliet (Yulex) Orchestrator',
+    'google-workspace-status': 'Sincronizado vía Julie (Yulex) Orchestrator',
     'google-cc-agent': 'Agente de diseño y síntesis de emails activado (Karina Voice Integration)',
     'google-workspace-cli': 'Conectado sistema enterprise via GAM/GYB CLI',
     'workflow-gmail': 'Automatización de respuestas de Booking/Huéspedes activada',
@@ -22,7 +22,7 @@ async function interconnect() {
 
   // Simulación de conexión con Google Workspace CLI (GAM)
   try {
-    // Si GAM está instalado en el sistema local de Clay, Juliet lo usará para gestionar usuarios/emails
+    // Si GAM está instalado en el sistema local de Clay, Julie lo usará para gestionar usuarios/emails
     const { stdout } = await execAsync('gam version').catch(() => ({ stdout: 'GAM no detectado en entorno local (simulado)' }));
     await saveSharedVision('google-cli-version', stdout.trim());
     console.log(`[Google CLI] Estado: ${stdout.trim()}`);

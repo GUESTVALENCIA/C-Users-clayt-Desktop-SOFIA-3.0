@@ -12,10 +12,10 @@ async function smokeTest() {
     }
 
     // Simulando chequeo de orquestador
-    console.log('✅ Juliet (Yulex) Orchestrator (MCP): 200 OK');
+    console.log('✅ Julie (Yulex) Orchestrator (MCP): 200 OK');
     console.log('✅ Google Workspace Enterprise Sync: 200 OK');
     console.log('✅ G4F Worker Dispatcher (Unlimited): 200 OK');
-    console.log('✅ Juliet Local Task Watcher: 200 OK');
+    console.log('✅ Julie Local Task Watcher: 200 OK');
     console.log('✅ Nati/Natasha Uncensored Pipeline: 200 OK');
     console.log('✅ Zero-Latency Voice Pipeline (Edge Elvira): 200 OK');
 
