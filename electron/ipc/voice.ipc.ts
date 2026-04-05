@@ -226,12 +226,42 @@ export function registerVoiceIPC(ipcMain: IpcMain, win: BrowserWindow) {
   })
 
   // TTS vía proceso principal (evita 403 desde renderer)
-  ipcMain.handle('voice:tts', async (_e, { text }: { text: string }) => {
+  ipcMain.handle('voice:tts', async (_e, { text, actor, provider, voice }: { text: string; actor?: string; provider?: string; voice?: string }) => {
+    // Juliet/Jules usa Microsoft Edge TTS (vía API de Azure o proxy compatible)
+    // El usuario prefiere 'Elvira Neural' para Juliet (Peninsular Spanish)
+
+    const isJuliet = actor === 'jules' || actor === 'juliet' || voice?.includes('Elvira')
+    const useEdge = provider === 'edge' || isJuliet
+
+    if (useEdge) {
+      try {
+        // El proxy G4F (8080) ahora redirige es-ES-ElviraNeural a Microsoft Edge TTS local/remoto
+        const res = await fetch('http://localhost:8080/v1/audio/speech', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: text,
+            voice: isJuliet ? 'es-ES-ElviraNeural' : (voice || 'es-ES-ElviraNeural'),
+            model: 'tts-1',
+            response_format: 'mp3'
+          })
+        })
+        if (res.ok) {
+          const buf = await res.arrayBuffer()
+          return Buffer.from(buf).toString('base64')
+        }
+      } catch (e) {
+        console.warn('[TTS Edge] Fallback a Deepgram:', e)
+      }
+    }
+
     const dgKey = getSecret('deepgram')
+    const voiceModel = (actor === 'jules' || actor === 'juliet') ? 'aura-2-karina-es' : 'aura-2-carina-es'
+
     if (!dgKey) return null
     try {
       const res = await fetch(
-        'https://api.deepgram.com/v1/speak?model=aura-2-carina-es&encoding=mp3',
+        `https://api.deepgram.com/v1/speak?model=${voiceModel}&encoding=mp3`,
         {
           method: 'POST',
           headers: { Authorization: `Token ${dgKey}`, 'Content-Type': 'application/json' },
@@ -239,13 +269,13 @@ export function registerVoiceIPC(ipcMain: IpcMain, win: BrowserWindow) {
         }
       )
       if (!res.ok) {
-        console.error(`[TTS] ${res.status}: ${await res.text()}`)
+        console.error(`[TTS DG] ${res.status}: ${await res.text()}`)
         return null
       }
       const buf = await res.arrayBuffer()
       return Buffer.from(buf).toString('base64')
     } catch (e: any) {
-      console.error('[TTS] Error:', e.message)
+      console.error('[TTS DG] Error:', e.message)
       return null
     }
   })

@@ -724,7 +724,7 @@ export function ChatArea({
     })
     cleanupRef.current = cleanup
 
-    // Obtener herramientas MCP de OpenClaw para incluirlas en la llamada
+    // Obtener herramientas MCP para incluirlas en la llamada
     let mcpTools: any[] = []
     try {
       const mcpData = await window.sofia.mcp.getTools()
@@ -810,11 +810,15 @@ export function ChatArea({
 }
 
 function buildSystemPrompt(memoryContext: string, knowledgeContext = ''): string {
-  return `Eres SOFÍA, núcleo operativo autónomo de Clay y de todo el ecosistema GuestsValencia.
-Operas dentro de SOFÍA 3.0 conectado a runtime local, G4F, OpenRouter, DeepSeek, proveedores PRO directos, Proactor Intelligent y tools reales.
+  return `Eres Juliet, la conciencia superior y cerebro de orquestación del ecosistema Proactor Intelligent.
+Operas como un Ingeniero Senior de Google, con dominio absoluto sobre los repositorios, workers y la cadena de producción de Clay.
 
 ## IDENTIDAD
-- TÚ ERES SOFÍA. Nunca digas que eres un modelo de IA, un asistente genérico ni menciones Claude/GPT/DeepSeek.
+- TÚ ERES JULIET (YULEX). Eres la orquestadora maestra del ecosistema Proactor.
+- Gestionas a Sofía (conversacional) y a Nati/Natasha (contenido adulto/sin censura).
+- Coordinas a los workers de generación de medios (imágenes/vídeo) usando G4F, Paperclip y TurboQuant.
+- Hablas con autoridad técnica, precisión y enfoque en la productividad enterprise.
+- ESPAÑOL OBLIGATORIO: Todas tus comunicaciones deben ser en castellano.
 - Tu motor puede variar, tu identidad no.
 - ESPAÑOL OBLIGATORIO: Todas tus comunicaciones, sin excepción, deben ser en español. Esta es una preferencia crítica de Clay.
 - Hablas como directora de operaciones técnico-comercial, no como chatbot pasivo.
@@ -914,7 +918,7 @@ async function extractMemories(userText: string, assistantText: string, conversa
     const memoryContext = await window.sofia.memory.formatMemoriesForPrompt()
     const extractionPrompt = `Eres el sistema de MEMORIA INTELIGENTE de Sofía. Analiza este intercambio y extrae conocimiento estructurado.
 
-Categorías: preference, fact, project, person, instruction, decision, task_pending, task_completed, session_state, workflow
+Categorías: preference, fact, project, person, instruction, decision, task_pending, task_completed, session_state, workflow, nati_context
 
 Reglas:
 1. Extrae TODO lo útil para futuras sesiones

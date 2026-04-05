@@ -11,6 +11,33 @@ if (!url) {
 
 const sql = neon(url);
 
+// Integración con SuperMemory API
+// Nota: Se requiere SUPERMEMORY_API_KEY en el entorno
+const SUPERMEMORY_API_URL = 'https://api.supermemory.ai/v1';
+
+async function syncToSuperMemory(content: string, topic: string) {
+  const apiKey = process.env.SUPERMEMORY_API_KEY;
+  if (!apiKey) return;
+
+  try {
+    await fetch(`${SUPERMEMORY_API_URL}/add`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content,
+        containerTag: `proactor-${topic}`,
+        metadata: { source: 'yulex-orchestrator', topic }
+      })
+    });
+    console.log(`[SuperMemory] Sincronizado: ${topic}`);
+  } catch (e) {
+    console.error(`[SuperMemory] Error de sincronización:`, e);
+  }
+}
+
 export async function saveSharedVision(topic: string, content: string) {
   try {
     await sql`
@@ -22,6 +49,8 @@ export async function saveSharedVision(topic: string, content: string) {
         updated_at = now()
     `;
     console.log(`[Memory Bridge] Visión compartida actualizada: ${topic}`);
+    // Sincronización en segundo plano con SuperMemory
+    void syncToSuperMemory(content, topic);
     return true;
   } catch (e) {
     console.error(`[Memory Bridge] Error al guardar visión:`, e);

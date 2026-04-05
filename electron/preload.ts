@@ -30,7 +30,7 @@ contextBridge.exposeInMainWorld('sofia', {
         sendToLLM: (params: any) => ipcRenderer.invoke('voice:send-to-llm', params),
         abortLLM: () => ipcRenderer.invoke('voice:abort-llm'),
         onLLMChunk: (cb: (chunk: any) => void) => onEvent('voice:llm-chunk', cb),
-        tts: (text: string) => ipcRenderer.invoke('voice:tts', { text }),
+        tts: (text: string, actor?: string) => ipcRenderer.invoke('voice:tts', { text, actor }),
       },
 
       // Memoria - gestión de conversaciones y contexto
@@ -43,8 +43,19 @@ contextBridge.exposeInMainWorld('sofia', {
         saveMessage: (params: any) => ipcRenderer.invoke('memory:save-message', params),
         getMemories: () => ipcRenderer.invoke('memory:get-all'),
         saveMemory: (mem: any) => ipcRenderer.invoke('memory:save', mem),
+        getSharedVision: (topic: string) => ipcRenderer.invoke('memory:shared-vision:get', topic),
+        saveSharedVision: (topic: string, content: string) => ipcRenderer.invoke('memory:shared-vision:save', { topic, content }),
         formatMemoriesForPrompt: () => ipcRenderer.invoke('memory:format-for-prompt'),
         initSchema: () => ipcRenderer.invoke('memory:init-schema'),
+        jules: {
+          save: (mem: any) => ipcRenderer.invoke('memory:jules:save', mem),
+          getAll: () => ipcRenderer.invoke('memory:jules:get-all'),
+        },
+        tasks: {
+          create: (task: any) => ipcRenderer.invoke('memory:tasks:create', task),
+          getPending: () => ipcRenderer.invoke('memory:tasks:get-pending'),
+          updateStatus: (params: any) => ipcRenderer.invoke('memory:tasks:update-status', params),
+        },
       },
 
       // Configuración - claves API y secretos

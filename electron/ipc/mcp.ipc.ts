@@ -451,6 +451,8 @@ function buildImageFallbackUrl(prompt: string, model: string | null | undefined)
 
 async function generateImageWithG4F(args: Record<string, any>) {
   const prompt = String(args.prompt || args.description || '').trim()
+  const isUncensored = args.agent === 'nati' || args.agent === 'natasha' || args.uncensored === true
+
   if (!prompt) {
     return { success: false, error: 'Missing prompt' }
   }
@@ -462,6 +464,10 @@ async function generateImageWithG4F(args: Record<string, any>) {
 
   // Priorizar G4F Proxy v2 en :8080 si G4F_URL apunta ahí, o usar :8080 directamente
   const IMAGE_API = `http://127.0.0.1:8080/v1/images/generations`
+
+  // Mapeo de modelos sin censura para Nati
+  const uncensoredModels = ['flux-uncensored', 'sdxl-nude-v2', 'nanobanana-dark']
+  const targetModel = isUncensored ? (args.model || uncensoredModels[0]) : (args.model || 'flux')
 
   for (const provider of attempts) {
     try {
@@ -478,7 +484,7 @@ async function generateImageWithG4F(args: Record<string, any>) {
       const response = await fetchJson(IMAGE_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, model: targetModel }),
       }, 180000)
 
       if (!response.ok) {
@@ -540,8 +546,10 @@ async function generateVideoWithG4F(args: Record<string, any>) {
     return { success: false, error: 'Missing prompt' }
   }
 
+  const isUncensored = args.agent === 'nati' || args.agent === 'natasha' || args.uncensored === true
   const targetDir = String(args.targetDir || DEFAULT_GENERATED_MEDIA_DIR)
-  const model = String(args.model || 'veo-3.1-fast')
+  const uncensoredModels = ['veo-3.1-uncensored', 'wan2.6-dark', 'ltx2-pro']
+  const targetModel = isUncensored ? (args.model || uncensoredModels[0]) : (args.model || 'veo-3.1-fast')
   const attempts = buildProviderAttempts(args.provider)
   const notes: string[] = []
 
@@ -563,7 +571,7 @@ async function generateVideoWithG4F(args: Record<string, any>) {
       const response = await fetchJson(VIDEO_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, model: targetModel }),
       }, 300000)
 
       if (!response.ok) {
@@ -904,7 +912,7 @@ export async function callRealTool(toolName: string, args: Record<string, any>) 
   return { error: `Tool '${toolName}' not available` }
 }
 
-export const OPENCLAW_TOOLS_KNOWN = [...LOCAL_RUNTIME_TOOLS]
+export const PROACTOR_TOOLS_KNOWN = [...LOCAL_RUNTIME_TOOLS]
 
 export function registerMcpIPC(ipcMain: IpcMain) {
   ipcMain.handle('mcp:get-servers', async () => {
@@ -931,9 +939,7 @@ export function registerMcpIPC(ipcMain: IpcMain) {
   ipcMain.handle('mcp:get-runtime-health', async () => getRuntimeHealthSnapshot())
 
   ipcMain.handle('mcp:get-editor-inventory', async () => ({ ok: false, summary: { configsFound: 0, configsScanned: 0, totalServers: 0, context7Detected: [] }, configs: [], servers: [] }))
-  ipcMain.handle('mcp:get-openclaw-library', async () => ({ ok: false, generatedAt: null, notes: [], inventory: null, sources: {} }))
   ipcMain.handle('mcp:get-memory-policy', async () => ({ ok: false, generatedAt: null, state: 'missing', lanes: [], forbiddenSharing: [], adapters: [] }))
-  ipcMain.handle('mcp:get-openclaw-capability-registry', async () => ({ ok: false, generatedAt: null, summary: { totalCapabilities: 0, activeCount: 0, configuredCount: 0, blockedCount: 0, degradedCount: 0, categories: {} }, entries: [] }))
 
   ipcMain.handle('mcp:get-public-api-capability-registry', async () => {
     const registry = readLocalJson(PUBLIC_API_CAPABILITY_REGISTRY_PATH)

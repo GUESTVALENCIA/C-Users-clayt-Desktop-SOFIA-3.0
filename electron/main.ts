@@ -17,7 +17,7 @@ import { registerSettingsIPC } from './ipc/settings.ipc'
 import {
   registerMcpIPC,
   callRealTool,
-  OPENCLAW_TOOLS_KNOWN,
+  PROACTOR_TOOLS_KNOWN,
   fetchDynamicToolCatalog,
   getDynamicToolCatalogStatus,
 } from './ipc/mcp.ipc'
@@ -61,9 +61,9 @@ function startElectronMcpServer(): void {
           res.end(JSON.stringify({
             status: 'online',
             name: 'electron-mcp',
-            tools: OPENCLAW_TOOLS_KNOWN.length,
+              tools: PROACTOR_TOOLS_KNOWN.length,
             dynamic: false,
-            sources: { 'electron-local': OPENCLAW_TOOLS_KNOWN.length },
+              sources: { 'electron-local': PROACTOR_TOOLS_KNOWN.length },
             nativeContractRevalidated: false,
             fallbackUsed: true,
           }))
@@ -80,7 +80,7 @@ function startElectronMcpServer(): void {
           res.end(JSON.stringify({ tools }))
         } catch {
           res.writeHead(200, headers)
-          res.end(JSON.stringify({ tools: OPENCLAW_TOOLS_KNOWN, _fallback: true }))
+          res.end(JSON.stringify({ tools: PROACTOR_TOOLS_KNOWN, _fallback: true }))
         }
       })()
       return

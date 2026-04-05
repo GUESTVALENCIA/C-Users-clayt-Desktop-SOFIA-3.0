@@ -59,6 +59,25 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
         updated_at TIMESTAMPTZ DEFAULT now(),
         UNIQUE(topic)
       )`
+      await db`CREATE TABLE IF NOT EXISTS jules_memory (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        category VARCHAR(50) NOT NULL,
+        key VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        confidence REAL DEFAULT 1.0,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(category, key)
+      )`
+      await db`CREATE TABLE IF NOT EXISTS local_tasks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        description TEXT NOT NULL,
+        command TEXT,
+        status TEXT DEFAULT 'pending',
+        result TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`
       console.log('[Memory] Schema initialized')
       return { ok: true }
     } catch (e: any) {
@@ -246,5 +265,57 @@ export function registerMemoryIPC(ipcMain: IpcMain) {
     try {
       return await db`SELECT * FROM shared_vision ORDER BY updated_at DESC`
     } catch { return [] }
+  })
+
+  // Jules Dedicated Memory
+  ipcMain.handle('memory:jules:save', async (_e, mem: any) => {
+    const db = await getSQL()
+    if (!db) return false
+    try {
+      await db`INSERT INTO jules_memory (category, key, content, confidence)
+        VALUES (${mem.category}, ${mem.key}, ${mem.content}, ${mem.confidence || 1.0})
+        ON CONFLICT (category, key) DO UPDATE SET
+          content = EXCLUDED.content,
+          confidence = EXCLUDED.confidence,
+          updated_at = now()`
+      return true
+    } catch { return false }
+  })
+
+  ipcMain.handle('memory:jules:get-all', async () => {
+    const db = await getSQL()
+    if (!db) return []
+    try {
+      return await db`SELECT * FROM jules_memory ORDER BY category, updated_at DESC`
+    } catch { return [] }
+  })
+
+  // Local Tasks (Offloading)
+  ipcMain.handle('memory:tasks:create', async (_e, task: any) => {
+    const db = await getSQL()
+    if (!db) return null
+    try {
+      const rows = await db`INSERT INTO local_tasks (description, command, status)
+        VALUES (${task.description}, ${task.command || null}, 'pending')
+        RETURNING *`
+      return rows[0]
+    } catch { return null }
+  })
+
+  ipcMain.handle('memory:tasks:get-pending', async () => {
+    const db = await getSQL()
+    if (!db) return []
+    try {
+      return await db`SELECT * FROM local_tasks WHERE status = 'pending' ORDER BY created_at ASC`
+    } catch { return [] }
+  })
+
+  ipcMain.handle('memory:tasks:update-status', async (_e, { id, status, result }: any) => {
+    const db = await getSQL()
+    if (!db) return false
+    try {
+      await db`UPDATE local_tasks SET status = ${status}, result = ${result || null}, updated_at = now() WHERE id = ${id}`
+      return true
+    } catch { return false }
   })
 }

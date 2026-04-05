@@ -22,16 +22,90 @@ export function MessageList({ messages, streamingText, isStreaming, toolTrace, r
 
   if (messages.length === 0 && !isStreaming) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl" style={{
-            background: 'radial-gradient(circle at 30% 30%, #7dd3fc, #2563eb)',
-            boxShadow: '0 10px 40px rgba(37,99,235,.3)',
-          }} />
-          <h2 className="text-xl font-semibold text-text mb-2">Hola, Clay</h2>
-          <p className="text-sm text-muted max-w-md">
-            Soy Sofía, tu asistente personal. Escribe un mensaje o inicia una conversación de voz.
-          </p>
+      <div className="flex h-full items-center justify-center overflow-y-auto p-8">
+        <div className="max-w-4xl w-full">
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-3xl" style={{
+              background: 'radial-gradient(circle at 30% 30%, #38bdf8, #6366f1)',
+              boxShadow: '0 20px 50px rgba(99,102,241,.4)',
+            }} />
+            <h2 className="text-4xl font-black text-text mb-4 text-glow tracking-tighter">CENTRO DE MANDO PROACTOR</h2>
+            <p className="text-lg text-muted max-w-2xl mx-auto leading-relaxed">
+              Soberanía Digital activada. <span className="text-accent font-bold">Juliet (Yulex)</span> orquestando la producción
+              multimedia y la red de agentes autónomos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="p-6 rounded-[2rem] bg-panel-2 border border-line card-shadow group hover:border-accent/50 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/70">Workers Live</span>
+              </div>
+              <div className="text-3xl font-black text-text group-hover:scale-105 transition-transform origin-left">12</div>
+              <div className="text-xs text-muted mt-1 font-medium">Agentes G4F operando sin límites.</div>
+            </div>
+
+            <div className="p-6 rounded-[2rem] bg-panel-2 border border-line card-shadow group hover:border-accent/50 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                  <Shuffle size={20} className="group-hover:rotate-180 transition-transform duration-700" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/70">Shared Vision</span>
+              </div>
+              <div className="text-3xl font-black text-text">SYNC</div>
+              <div className="text-xs text-muted mt-1 font-medium">Neon DB + SuperMemory conectadas.</div>
+            </div>
+
+            <div className="p-6 rounded-[2rem] bg-panel-2 border border-line card-shadow group hover:border-accent/50 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                  <Bot size={20} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500/70">Orchestrator</span>
+              </div>
+              <div className="text-3xl font-black text-text">YULEX</div>
+              <div className="text-xs text-muted mt-1 font-medium">Modo Senior Expert Developer activo.</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-8 rounded-[2.5rem] bg-panel border border-line/50 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <LoaderCircle size={80} />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-accent mb-4">Tareas Locales Pendientes</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-panel-2 border border-line text-xs font-medium text-text group-hover:translate-x-2 transition-transform">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Sincronización de repositorios Paperclip...
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-panel-2 border border-line text-xs font-medium text-text group-hover:translate-x-2 transition-transform delay-75">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Optimización de pipeline de audio Perplexity-level...
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-[2.5rem] bg-panel border border-line/50 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <CheckCircle2 size={80} />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-400 mb-4">Últimas Sesiones</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-panel-2 border border-line text-xs font-medium text-text/60 group-hover:translate-x-2 transition-transform">
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  Rediseño UI Proactor Galaxy v2
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-panel-2 border border-line text-xs font-medium text-text/60 group-hover:translate-x-2 transition-transform delay-75">
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  Configuración inicial de Neon DB Juliet
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
