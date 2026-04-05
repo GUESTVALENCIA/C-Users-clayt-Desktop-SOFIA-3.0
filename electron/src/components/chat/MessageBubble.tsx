@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '../../app/App'
-import { User, Bot, ExternalLink, LoaderCircle, Volume2 } from 'lucide-react'
+import { User, Bot, ExternalLink, LoaderCircle, Volume2, Brain } from 'lucide-react'
 
 interface MessageBubbleProps {
   message: ChatMessage
@@ -38,80 +38,76 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   }
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      {!isUser && (
-        <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center" style={{
-          background: 'radial-gradient(circle at 30% 30%, #7dd3fc, #2563eb)',
-        }}>
-          <Bot size={16} className="text-white" />
-        </div>
-      )}
-      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+    <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`relative max-w-[85%] sm:max-w-[75%] rounded-[24px] px-5 py-4 shadow-sm transition-all duration-300 ${
         isUser
-          ? 'bg-blue-600/20 border border-blue-500/30 text-text'
-          : 'bg-panel-2 border border-line text-text'
+          ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-900/20'
+          : 'bg-slate-800/40 backdrop-blur-md border border-slate-700/50 text-slate-200 rounded-tl-none'
       }`}>
         {!isUser && message.knowledgeCard && (
-          <div className="mb-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200">
-                  Nucleo SOFÍA
+          <div className="mb-4 overflow-hidden rounded-2xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-sm">
+            <div className="bg-blue-500/10 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Brain size={12} className="text-blue-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Nucleo SOFÍA</span>
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text">{message.knowledgeCard.title}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => void handleSpeak()}
-                  className="rounded-full border border-line bg-panel px-2 py-2 text-muted transition-colors hover:border-cyan-400/40 hover:text-text"
-                  title="Escuchar respuesta"
-                >
-                  {isSpeaking ? <LoaderCircle size={14} className="animate-spin" /> : <Volume2 size={14} />}
-                </button>
-                <a
-                  href={message.knowledgeCard.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-line bg-panel px-2 py-2 text-muted transition-colors hover:border-cyan-400/40 hover:text-text"
-                  title="Abrir fuente oficial"
-                >
-                  <ExternalLink size={14} />
-                </a>
-              </div>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => void handleSpeak()}
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                    >
+                        {isSpeaking ? <LoaderCircle size={12} className="animate-spin" /> : <Volume2 size={12} />}
+                    </button>
+                    <a
+                        href={message.knowledgeCard.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                    >
+                        <ExternalLink size={12} />
+                    </a>
+                </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              <span className="rounded-full border border-line bg-panel px-2 py-1 text-muted">
-                Confianza {Math.round((message.knowledgeCard.confidence || 0) * 100)}%
-              </span>
-              <span className="rounded-full border border-line bg-panel px-2 py-1 text-muted">
-                {message.knowledgeCard.latencyMs}ms
-              </span>
-              {isLocalFallback && (
-                <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-amber-100">
-                  Fallback local
-                </span>
-              )}
-              <span className="rounded-full border border-line bg-panel px-2 py-1 text-muted">
-                {message.knowledgeCard.sourceLabel}
-              </span>
+
+            <div className="p-4">
+                <h4 className="text-sm font-bold text-white mb-2">{message.knowledgeCard.title}</h4>
+                <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="px-2 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-medium text-slate-400">
+                        Reliability: {Math.round((message.knowledgeCard.confidence || 0) * 100)}%
+                    </div>
+                    <div className="px-2 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-medium text-slate-400">
+                        {message.knowledgeCard.latencyMs}ms
+                    </div>
+                    {isLocalFallback && (
+                        <div className="px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-400">
+                            OFFLINE ENGINE
+                        </div>
+                    )}
+                </div>
             </div>
           </div>
         )}
-        {isUser ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        ) : (
-          <div className="prose prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
-            </ReactMarkdown>
-          </div>
-        )}
-      </div>
-      {isUser && (
-        <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center bg-panel-2 border border-line">
-          <User size={16} className="text-muted" />
+
+        <div className={`text-[15px] leading-relaxed ${isUser ? 'font-medium' : 'font-normal'}`}>
+            {isUser ? (
+                <p className="whitespace-pre-wrap">{message.content}</p>
+            ) : (
+                <div className="prose prose-invert prose-sm max-w-none
+                    prose-p:leading-relaxed prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-700/50
+                    prose-code:text-blue-300 prose-headings:text-white prose-a:text-blue-400">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                    </ReactMarkdown>
+                </div>
+            )}
         </div>
-      )}
+
+        <div className={`mt-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter ${isUser ? 'text-blue-200/60' : 'text-slate-500'}`}>
+            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {!isUser && <span className="w-1 h-1 rounded-full bg-slate-700" />}
+            {!isUser && <span>AI Model Optimized</span>}
+        </div>
+      </div>
     </div>
   )
 }

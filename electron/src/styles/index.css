@@ -30,17 +30,17 @@ html[data-theme='day'] {
 }
 
 html[data-theme='night'] {
-  --color-bg: #0b0d10;
-  --color-panel: #12161b;
-  --color-panel-2: #171c22;
-  --color-text: #eef2f7;
-  --color-muted: #9aa6b2;
-  --color-line: #27303a;
-  --color-accent: #7dd3fc;
-  --color-accent-2: #93c5fd;
-  --color-ok: #86efac;
-  --color-warn: #fcd34d;
-  --color-error: #fca5a5;
+  --color-bg: #020617;
+  --color-panel: #0f172a;
+  --color-panel-2: #1e293b;
+  --color-text: #f8fafc;
+  --color-muted: #94a3b8;
+  --color-line: #1e293b;
+  --color-accent: #3b82f6;
+  --color-accent-2: #2563eb;
+  --color-ok: #10b981;
+  --color-warn: #f59e0b;
+  --color-error: #ef4444;
 }
 
 html[data-theme='mist'] {

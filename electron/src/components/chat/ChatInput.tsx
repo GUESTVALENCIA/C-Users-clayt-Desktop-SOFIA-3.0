@@ -152,84 +152,93 @@ export function ChatInput({ onSend, onAbort, isStreaming }: ChatInputProps) {
   }
 
   return (
-    <div className="rounded-[28px] border border-line bg-panel/95 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.28)] backdrop-blur-xl">
-      {/* Attachment preview */}
-      {attachment && (
-        <div className="mb-3 p-3 bg-panel-2 border border-line rounded-lg flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <Paperclip size={16} className="text-accent shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted truncate">{attachment.name}</p>
-              <p className="text-xs text-muted/50">{(attachment.size / 1024).toFixed(1)} KB</p>
+    <div className="relative group max-w-4xl mx-auto">
+      {/* Glow Effect */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-cyan-500/20 rounded-[32px] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative flex flex-col rounded-[30px] border border-slate-700/50 bg-slate-900/80 backdrop-blur-2xl p-2 shadow-2xl transition-all duration-300 focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20">
+
+        {/* Attachment preview */}
+        {attachment && (
+          <div className="m-2 p-3 bg-slate-800/80 border border-slate-700/50 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <Paperclip size={14} className="text-blue-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white truncate">{attachment.name}</p>
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-tighter">{(attachment.size / 1024).toFixed(1)} KB</p>
+              </div>
             </div>
+            <button
+              onClick={clearAttachment}
+              className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+            >
+              <X size={14} />
+            </button>
           </div>
+        )}
+
+        <div className="flex items-end gap-2 p-1">
+          <div className="flex items-center gap-1 mb-1 ml-1">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              title="Adjuntar"
+            >
+              <Paperclip size={18} />
+            </button>
+            <button
+              onClick={toggleDictation}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                isDictating ? 'text-blue-400 bg-blue-500/10 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Dictado"
+            >
+              <Mic size={18} />
+            </button>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.txt,.md,.json,.csv"
+            className="hidden"
+          />
+
+          <div className="flex-1">
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => { setText(e.target.value); handleInput() }}
+              onKeyDown={handleKeyDown}
+              placeholder="Pregúntame cualquier cosa..."
+              rows={1}
+              className="w-full bg-transparent border-none px-2 py-3 text-[15px] text-white placeholder-slate-500 resize-none outline-none focus:ring-0 min-h-[44px]"
+              style={{ maxHeight: '200px' }}
+            />
+          </div>
+
           <button
-            onClick={clearAttachment}
-            className="shrink-0 p-1 hover:bg-panel rounded transition-colors"
-            title="Quitar archivo"
+            onClick={handleSubmit}
+            disabled={!text.trim() && !attachment && !isStreaming}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 transform active:scale-90 shadow-lg ${
+              isStreaming
+                ? 'bg-red-500 text-white hover:bg-red-600 rotate-0'
+                : text.trim() || attachment
+                  ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/30'
+                  : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+            }`}
           >
-            <X size={14} className="text-muted" />
+            {isStreaming ? <Square size={16} fill="currentColor" /> : <Send size={18} />}
           </button>
         </div>
-      )}
-
-      <div className="flex items-end gap-2 max-w-4xl mx-auto">
-        <button
-          onClick={toggleDictation}
-          disabled={!speechSupported}
-          className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-            isDictating
-              ? 'bg-accent/15 border-accent/60 text-accent'
-              : speechSupported
-                ? 'bg-panel-2 border-line text-muted hover:text-accent hover:border-accent/50'
-                : 'bg-panel-2 border-line text-muted/40 cursor-not-allowed'
-          }`}
-          title={speechSupported ? (isDictating ? 'Detener dictado' : 'Dictado al chat') : 'Dictado no disponible'}
-        >
-          <Mic size={18} />
-        </button>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="shrink-0 w-10 h-10 rounded-xl bg-panel-2 border border-line flex items-center justify-center text-muted hover:text-accent hover:border-accent/50 transition-all"
-          title="Adjuntar archivo"
-        >
-          <Paperclip size={18} />
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelect}
-          accept="image/*,.pdf,.txt,.md,.json,.csv"
-          className="hidden"
-        />
-
-        <div className="flex-1 relative">
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => { setText(e.target.value); handleInput() }}
-            onKeyDown={handleKeyDown}
-            placeholder="Escribe un mensaje..."
-            rows={1}
-            className="w-full bg-panel-2 border border-line rounded-xl px-4 py-3 text-sm text-text placeholder-muted resize-none outline-none focus:border-accent/50 transition-colors"
-            style={{ maxHeight: '200px' }}
-          />
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            isStreaming
-              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-              : text.trim() || attachment
-                ? 'bg-gradient-to-b from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600'
-                : 'bg-panel-2 border border-line text-muted'
-          }`}
-        >
-          {isStreaming ? <Square size={16} /> : <Send size={16} />}
-        </button>
+      </div>
+      <div className="mt-2 text-center">
+        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+            {isStreaming ? "SOFÍA está procesando tu solicitud..." : "Enter para enviar · Shift + Enter para nueva línea"}
+        </p>
       </div>
     </div>
   )
