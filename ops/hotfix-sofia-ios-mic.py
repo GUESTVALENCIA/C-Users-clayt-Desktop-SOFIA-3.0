@@ -92,7 +92,7 @@ def patch_source(source: str) -> tuple[str, bool]:
 
 def validate_html(source: str) -> None:
     required = [
-        "gemini-2.5-flash-native-audio",
+        "bidiGenerateContent",
         "inputAudioTranscription",
         "name:'consultar_cerebro'",
         "fc.name === 'consultar_cerebro'",
