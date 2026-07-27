@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import pathlib
 import re
 import shutil
 import subprocess
 from typing import Any
 
-TASK_NAME = 'probe_exact_claude_model_20260727'
+CONFIG_KEY = 'runtime_claude_model_probe_20260727'
 ROOTS = [pathlib.Path('/opt/sofia'), pathlib.Path('/root'), pathlib.Path('/etc/systemd/system')]
 DB_PATTERNS = [
     re.compile(r'^\s*NEON_DATABASE_URL\s*=\s*["\']?([^\s"\'`;]+)', re.I | re.M),
@@ -77,11 +76,7 @@ def walk_strings(obj: Any):
 
 def probe() -> dict[str, Any]:
     claude = shutil.which('claude')
-    result: dict[str, Any] = {
-        'ok': False,
-        'requested_alias': 'opus',
-        'claude_path': claude,
-    }
+    result: dict[str, Any] = {'ok': False, 'requested_alias': 'opus', 'claude_path': claude}
     try:
         result['claude_version'] = subprocess.run(
             ['claude','--version'], text=True, capture_output=True, timeout=15
@@ -137,9 +132,9 @@ def write_to_neon(payload: dict[str, Any]) -> None:
     urls = candidates_from_system()
     encoded = base64.b64encode(json.dumps(payload, ensure_ascii=False, separators=(',',':')).encode()).decode()
     sql = (
-        "UPDATE public.gv_sofia_tareas SET ultimo_resultado="
-        f"convert_from(decode('{encoded}','base64'),'UTF8') "
-        f"WHERE nombre='{TASK_NAME}';"
+        "INSERT INTO public.gv_config_sofia(clave,valor,actualizado_at) VALUES ("
+        f"'{CONFIG_KEY}',convert_from(decode('{encoded}','base64'),'UTF8')::jsonb,now()) "
+        "ON CONFLICT (clave) DO UPDATE SET valor=EXCLUDED.valor, actualizado_at=now();"
     )
     psql = shutil.which('psql')
     if not psql:
@@ -151,7 +146,7 @@ def write_to_neon(payload: dict[str, Any]) -> None:
             if proc.returncode == 0:
                 print('MODEL_PROBE_RECORDED')
                 return
-            errors.append(proc.stderr[-120:])
+            errors.append(proc.stderr[-160:])
         except Exception as exc:
             errors.append(type(exc).__name__)
     raise RuntimeError('neon_write_failed:' + '|'.join(errors[-3:]))
@@ -161,6 +156,5 @@ payload=probe()
 try:
     write_to_neon(payload)
 except Exception as exc:
-    # Always leave a compact stdout breadcrumb if Neon write cannot be completed.
     print(json.dumps({'probe':payload,'record_error':str(exc)[:300]},ensure_ascii=False,separators=(',',':')))
     raise
