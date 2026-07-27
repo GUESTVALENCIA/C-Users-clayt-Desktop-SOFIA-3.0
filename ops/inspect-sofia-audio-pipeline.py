@@ -8,7 +8,7 @@ import os
 import pathlib
 import re
 
-ROOTS = [pathlib.Path('/opt/sofia'), pathlib.Path('/root')]
+ROOTS = [pathlib.Path('/opt/sofia')]
 OUT = pathlib.Path('/opt/sofia/sofia-mobile/audio-pipeline-inspect.json')
 
 
@@ -18,7 +18,7 @@ def redact(text: str) -> str:
     return text
 
 
-def line_excerpt(source: str, patterns: list[str], radius: int = 14) -> list[dict]:
+def line_excerpt(source: str, patterns: list[str], radius: int = 10) -> list[dict]:
     lines = source.splitlines()
     indexes: set[int] = set()
     for i, line in enumerate(lines):
@@ -28,18 +28,12 @@ def line_excerpt(source: str, patterns: list[str], radius: int = 14) -> list[dic
     return [{'line': i+1, 'text': redact(lines[i])[:500]} for i in sorted(indexes)]
 
 
-def block_hash(source: str, start_pattern: str, end_pattern: str | None = None, span: int = 80) -> str | None:
+def block_hash(source: str, start_pattern: str, span: int = 100) -> str | None:
     lines = source.splitlines()
     start = next((i for i,l in enumerate(lines) if start_pattern.lower() in l.lower()), None)
     if start is None:
         return None
-    end = min(len(lines), start + span)
-    if end_pattern:
-        for i in range(start+1, end):
-            if end_pattern.lower() in lines[i].lower():
-                end = i+1
-                break
-    block = '\n'.join(lines[start:end])
+    block = '\n'.join(lines[start:min(len(lines), start+span)])
     return hashlib.sha256(block.encode()).hexdigest()[:16]
 
 
@@ -47,8 +41,7 @@ def inspect_file(path: pathlib.Path) -> dict:
     data = path.read_bytes()
     source = data.decode('utf-8', errors='ignore')
     st = path.stat()
-    rates = sorted(set(re.findall(r'audio/pcm(?:;|\\?u003[bB])rate[=:]?\s*["\']?(\d+)', source, flags=re.I)))
-    rates += [x for x in re.findall(r'rate=(\d+)', source, flags=re.I) if x not in rates]
+    rates = sorted(set(re.findall(r'rate=(\d+)', source, flags=re.I)))
     sello = None
     m = re.search(r'<p id="sello"[^>]*>([^<]+)</p>', source)
     if m:
@@ -63,9 +56,9 @@ def inspect_file(path: pathlib.Path) -> dict:
         'audio_worklet': 'AudioWorkletNode' in source,
         'script_processor': 'createScriptProcessor' in source,
         'resample_markers': [x for x in ['downsample','resample','targetRate','sampleRate','48000','16000','24000'] if x.lower() in source.lower()],
-        'send_block_hash': block_hash(source, 'function enviarAudio', '}', 120),
-        'worklet_block_hash': block_hash(source, 'registerProcessor', None, 120),
-        'setup_block_hash': block_hash(source, 'inputAudioTranscription', None, 100),
+        'send_block_hash': block_hash(source, 'function enviarAudio'),
+        'worklet_block_hash': block_hash(source, 'registerProcessor'),
+        'setup_block_hash': block_hash(source, 'inputAudioTranscription'),
         'silent_sink': 'micNode.connect(micSink)' in source,
         'automatic_greeting': '[inicio]' in source,
     }
@@ -74,9 +67,8 @@ def inspect_file(path: pathlib.Path) -> dict:
 def main() -> int:
     candidates: list[pathlib.Path] = []
     seen: set[str] = set()
+    errors: list[str] = []
     for root in ROOTS:
-        if not root.exists():
-            continue
         for dirpath, dirnames, filenames in os.walk(root):
             depth = len(pathlib.Path(dirpath).parts) - len(root.parts)
             if depth > 8:
@@ -91,11 +83,17 @@ def main() -> int:
                         if p.stat().st_size <= 5_000_000:
                             key = str(p.resolve())
                             if key not in seen:
-                                seen.add(key); candidates.append(p)
-                    except Exception:
-                        pass
-    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    summaries = [inspect_file(p) for p in candidates[:40]]
+                                seen.add(key)
+                                candidates.append(p)
+                    except Exception as exc:
+                        errors.append(type(exc).__name__)
+    candidates.sort(key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+    summaries = []
+    for p in candidates[:40]:
+        try:
+            summaries.append(inspect_file(p))
+        except Exception as exc:
+            errors.append(f'{p.name}:{type(exc).__name__}')
 
     current = pathlib.Path('/opt/sofia/sofia-mobile/index.html')
     source = current.read_text(encoding='utf-8', errors='ignore')
@@ -103,13 +101,14 @@ def main() -> int:
         'function enviarAudio', 'realtimeInput', 'mediaChunks', 'audio/pcm',
         'registerProcessor', 'AudioWorkletNode', 'inputAudioTranscription',
         'gemini_ws_error', 'wake_error'
-    ], radius=12)
+    ])
 
     report = {
         'generated_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
         'current': inspect_file(current),
         'candidate_count': len(candidates),
         'candidates': summaries,
+        'inspection_errors': errors[:20],
         'current_audio_excerpts': excerpts,
     }
     OUT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
