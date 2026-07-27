@@ -127,7 +127,9 @@ def main() -> int:
     path = args.file.resolve()
     original_bytes = path.read_bytes()
     original_sha = hashlib.sha256(original_bytes).hexdigest()
-    source = original_bytes.decode("utf-8")
+    raw_source = original_bytes.decode("utf-8")
+    newline = "\r\n" if "\r\n" in raw_source else "\n"
+    source = raw_source.replace("\r\n", "\n")
 
     already = "mic_worklet_sink','zero_gain" in source
     if not already and original_sha != EXPECTED_SHA256:
@@ -137,7 +139,7 @@ def main() -> int:
     validate_html(patched)
 
     if not args.apply:
-        print(f"CHECK_OK HASH_BEFORE={original_sha} CHANGED={str(changed).lower()}")
+        print(f"CHECK_OK HASH_BEFORE={original_sha} CHANGED={str(changed).lower()} NEWLINE={'CRLF' if newline == chr(13)+chr(10) else 'LF'}")
         return 0
 
     backup_text = "none"
@@ -146,7 +148,8 @@ def main() -> int:
         backup = path.with_name(path.name + f".before-ios-mic-{stamp}")
         shutil.copy2(path, backup)
         temp = path.with_name(path.name + ".hotfix-tmp")
-        temp.write_text(patched, encoding="utf-8")
+        output = patched if newline == "\n" else patched.replace("\n", "\r\n")
+        temp.write_bytes(output.encode("utf-8"))
         temp.replace(path)
         backup_text = str(backup)
 
