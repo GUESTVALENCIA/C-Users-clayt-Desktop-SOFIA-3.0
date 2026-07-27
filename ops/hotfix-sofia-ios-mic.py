@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary reversible hotfix for the live Sofia iOS microphone graph.
-
-No credentials. Does not change Gemini Live, VAD, turn detection, prompts,
-tools, brain routing, reservations, messages, prices, Beds24 or Booking.
-"""
-
+"""Reversible hotfix for the live Sofia iOS microphone graph."""
 from __future__ import annotations
 
 import argparse
@@ -32,21 +27,22 @@ def patch_source(source: str) -> tuple[str, bool]:
     if "mic_worklet_sink','zero_gain" in source:
         return source, False
 
-    updated = replace_once(
+    source = replace_once(
         source,
         "let ws=null, audioCtx=null, micStream=null, micNode=null, srcNode=null;",
         "let ws=null, audioCtx=null, micStream=null, micNode=null, srcNode=null, micSink=null;",
         "audio globals",
     )
-    updated = replace_once(
-        updated,
+    source = replace_once(
+        source,
         """      micNode = new AudioWorkletNode(audioCtx, 'sofia-mic');
       micNode.port.onmessage = (ev) => enviarAudio(ev.data);
       srcNode.connect(micNode);
       try { callEvent('mic_modo','audioworklet'); } catch(e){}""",
         """      micNode = new AudioWorkletNode(audioCtx, 'sofia-mic');
       micNode.port.onmessage = (ev) => enviarAudio(ev.data);
-      // Mantiene activo el grafo de audio de Safari sin monitorización audible.
+      // Safari necesita un destino activo para seguir procesando el worklet.
+      // La ganancia cero evita monitorización, eco y audio audible.
       micSink = audioCtx.createGain();
       micSink.gain.value = 0;
       srcNode.connect(micNode);
@@ -55,8 +51,8 @@ def patch_source(source: str) -> tuple[str, bool]:
       try { callEvent('mic_modo','audioworklet'); callEvent('mic_worklet_sink','zero_gain'); } catch(e){}""",
         "AudioWorklet sink",
     )
-    updated = replace_once(
-        updated,
+    source = replace_once(
+        source,
         """        try { micNode && micNode.disconnect(); } catch(e){}
         micNode = audioCtx.createScriptProcessor(4096,1,1);""",
         """        try { micNode && micNode.disconnect(); } catch(e){}
@@ -65,34 +61,34 @@ def patch_source(source: str) -> tuple[str, bool]:
         micNode = audioCtx.createScriptProcessor(4096,1,1);""",
         "fallback cleanup",
     )
-    updated = replace_once(
-        updated,
+    source = replace_once(
+        source,
         """  try { micNode&&micNode.disconnect(); srcNode&&srcNode.disconnect(); } catch(e){}
   try { audioCtx&&audioCtx.close(); } catch(e){}""",
         """  try { micNode&&micNode.disconnect(); micSink&&micSink.disconnect(); srcNode&&srcNode.disconnect(); } catch(e){}
   try { audioCtx&&audioCtx.close(); } catch(e){}""",
         "stop disconnect",
     )
-    updated = replace_once(
-        updated,
+    source = replace_once(
+        source,
         "playCtx=null; audioCtx=null; micNode=null; srcNode=null;",
         "playCtx=null; audioCtx=null; micNode=null; micSink=null; srcNode=null;",
         "stop reset",
     )
-    updated, n = re.subn(
+    source, count = re.subn(
         r'(<p id="sello"[^>]*>)([^<]*)(</p>)',
         rf"\1{STAMP}\3",
-        updated,
+        source,
         count=1,
     )
-    if n != 1:
-        raise RuntimeError(f"version seal: expected exactly one match, found {n}")
-    return updated, True
+    if count != 1:
+        raise RuntimeError(f"version seal: expected exactly one match, found {count}")
+    return source, True
 
 
 def validate_html(source: str) -> None:
     required = [
-        "bidiGenerateContent",
+        "BidiGenerateContentConstrained",
         "inputAudioTranscription",
         "name:'consultar_cerebro'",
         "fc.name === 'consultar_cerebro'",
@@ -112,9 +108,11 @@ def validate_html(source: str) -> None:
 
     scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", source, flags=re.S | re.I)
     inline = "\n".join(part for part in scripts if part.strip())
-    tmp = pathlib.Path("/tmp/sofia-index-inline-check.js")
-    tmp.write_text(inline, encoding="utf-8")
-    subprocess.run(["node", "--check", str(tmp)], check=True, text=True, capture_output=True)
+    check_file = pathlib.Path("/tmp/sofia-index-inline-check.js")
+    check_file.write_text(inline, encoding="utf-8")
+    proc = subprocess.run(["node", "--check", str(check_file)], text=True, capture_output=True)
+    if proc.returncode != 0:
+        raise RuntimeError("JavaScript syntax failed: " + (proc.stderr or proc.stdout).strip())
 
 
 def main() -> int:
@@ -139,41 +137,26 @@ def main() -> int:
     validate_html(patched)
 
     if not args.apply:
-        print(f"CHECK_OK HASH_BEFORE={original_sha} CHANGED={str(changed).lower()} NEWLINE={'CRLF' if newline == chr(13)+chr(10) else 'LF'}")
+        print(f"CHECK_OK HASH_BEFORE={original_sha} CHANGED={str(changed).lower()}")
         return 0
 
     backup_text = "none"
     if changed:
-        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        backup = path.with_name(path.name + f".before-ios-mic-{stamp}")
+        timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        backup = path.with_name(path.name + f".before-ios-mic-{timestamp}")
         shutil.copy2(path, backup)
-        temp = path.with_name(path.name + ".hotfix-tmp")
         output = patched if newline == "\n" else patched.replace("\n", "\r\n")
+        temp = path.with_name(path.name + ".hotfix-tmp")
         temp.write_bytes(output.encode("utf-8"))
         temp.replace(path)
         backup_text = str(backup)
 
-    if args.restart:
-        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        subprocess.run(
-            [
-                "systemd-run",
-                f"--unit=sofia-ios-mic-restart-{stamp}",
-                "--on-active=2s",
-                "/bin/systemctl",
-                "restart",
-                "sofia-gateway",
-            ],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
+    final_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    print(f"HOTFIX_APPLIED HASH_BEFORE={original_sha} HASH_AFTER={final_sha} BACKUP={backup_text} JS_SYNTAX=pass")
 
-    print(
-        "HOTFIX_APPLIED "
-        f"HASH_BEFORE={original_sha} BACKUP={backup_text} "
-        "JS_SYNTAX=pass RESTART_SCHEDULED=" + ("yes" if args.restart else "no")
-    )
+    if args.restart:
+        subprocess.run(["systemctl", "restart", "sofia-gateway"], check=True)
+        print("RESTART_OK")
     return 0
 
 
